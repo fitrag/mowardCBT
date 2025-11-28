@@ -55,4 +55,9 @@ class User extends Authenticatable
     {
         return $this->belongsTo(Group::class);
     }
+
+    public function testAttempts()
+    {
+        return $this->hasMany(TestAttempt::class);
+    }
 }

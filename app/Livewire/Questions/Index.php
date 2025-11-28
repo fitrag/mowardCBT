@@ -56,7 +56,7 @@ class Index extends Component
     #[Rule('nullable|image|max:2048')]
     public $question_image;
 
-    #[Rule('nullable|integer|min:0')]
+    #[Rule('nullable|integer|min:0|max:3600')]
     public $timer;
 
     public $questionId;
@@ -184,7 +184,7 @@ class Index extends Component
 
     public function create()
     {
-        $this->reset(['subject_id', 'question', 'question_type', 'difficulty_level', 'status', 'audio_file', 'question_image', 'timer', 'questionId', 'currentAudioFile', 'currentQuestionImage']);
+        $this->reset(['subject_id', 'question', 'question_type', 'difficulty_level', 'status', 'audio_file', 'question_image', 'timer_seconds', 'questionId', 'currentAudioFile', 'currentQuestionImage']);
         $this->status = true;
         $this->question_type = 1;
         $this->difficulty_level = 1;
@@ -306,9 +306,9 @@ class Index extends Component
     public function downloadTemplate()
     {
         $headers = [
-            'no',
-            'jenis',
-            'kode',
+            'status',
+            'audio_file',
+            'timer',
             'isi',
             'status jawaban',
             'tingkat kesulitan soal',

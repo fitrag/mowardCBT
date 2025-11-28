@@ -497,8 +497,9 @@
                     <div>
                         <x-input-label for="timer" value="Timer (seconds)" />
                         <div class="mt-1.5">
-                            <x-text-input wire:model="timer" id="timer" type="number" min="0" placeholder="Optional" />
+                            <x-text-input wire:model="timer" id="timer" type="number" min="0" max="3600" placeholder="Optional (max 3600s)" />
                             <x-input-error :messages="$errors->get('timer')" />
+                            <p class="mt-1 text-xs text-slate-500">Leave empty for no timer. Max 60 minutes (3600s)</p>
                         </div>
                     </div>
 

@@ -1,4 +1,4 @@
-@props(['route', 'icon', 'label', 'activePattern' => null])
+@props(['route', 'label', 'activePattern' => null])
 
 @php
     $pattern = $activePattern ?? $route;

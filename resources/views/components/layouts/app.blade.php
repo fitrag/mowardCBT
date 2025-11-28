@@ -26,6 +26,7 @@
         }
     </style>
     <script src="https://cdn.ckeditor.com/ckeditor5/41.1.0/classic/ckeditor.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 <body class="h-full font-sans antialiased text-slate-900" x-data="{ sidebarOpen: false }">
     

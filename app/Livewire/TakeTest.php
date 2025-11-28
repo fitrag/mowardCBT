@@ -1,0 +1,313 @@
+<?php
+
+namespace App\Livewire;
+
+use App\Models\Question;
+use App\Models\Test;
+use App\Models\TestAttempt;
+use Livewire\Attributes\Layout;
+use Livewire\Component;
+
+#[Layout('components.layouts.app')]
+class TakeTest extends Component
+{
+    public Test $test;
+    public TestAttempt $attempt;
+    public $questions = [];
+    public $answers = [];
+    public $currentQuestionIndex = 0;
+    public $timeRemaining;
+    public $question_start_times = []; // Track when each question was first viewed
+    public $locked_questions = []; // Track which questions are locked due to timer expiry
+
+    public function mount(Test $test)
+    {
+        $this->test = $test;
+        $user = auth()->user();
+
+        // Get or validate attempt
+        $this->attempt = TestAttempt::where('user_id', $user->id)
+            ->where('test_id', $this->test->id)
+            ->where('status', 'in_progress')
+            ->firstOrFail();
+
+        // Load questions - use saved order if exists, otherwise generate new
+        if ($this->attempt->questions && !empty($this->attempt->questions)) {
+            // Load existing question order
+            $this->questions = $this->attempt->questions;
+            
+            // Check if we need to process options (first time loading or settings changed)
+            $needsProcessing = false;
+            foreach ($this->questions as $question) {
+                if ($question['question_type'] == 1) {
+                    // Check if shuffled_options or limited_options is missing
+                    if (!isset($question['shuffled_options']) && !isset($question['limited_options'])) {
+                        $needsProcessing = true;
+                        break;
+                    }
+                }
+            }
+            
+            // Process options if needed and save back to database
+            if ($needsProcessing) {
+                $this->processQuestionOptions();
+                // Save updated questions with shuffled/limited options
+                $this->attempt->update([
+                    'questions' => $this->questions,
+                ]);
+            }
+        } else {
+            // Generate new question order
+            $this->loadQuestions();
+            // Save question order to attempt
+            $this->attempt->update([
+                'questions' => $this->questions,
+            ]);
+        }
+
+        // Load existing answers
+        $this->answers = $this->attempt->answers ?? [];
+
+        // Calculate time remaining
+        $this->calculateTimeRemaining();
+    }
+
+    public function processQuestionOptions()
+    {
+        // Re-apply options_count and randomization to loaded questions
+        foreach ($this->questions as $index => $question) {
+            // Find the subject configuration for this question
+            $subject = $this->test->subjects->firstWhere('id', $question['subject_id']);
+            
+            if (!$subject || $question['question_type'] != 1) {
+                continue;
+            }
+
+            $options = collect($question['options'] ?? []);
+            
+            // Apply options_count limit if set
+            if ($subject->pivot->options_count && $subject->pivot->options_count > 0) {
+                $options = $options->take($subject->pivot->options_count);
+            }
+            
+            // Apply randomization if enabled
+            if ($subject->pivot->randomize_answers) {
+                // Check if already shuffled (has shuffled_options key)
+                if (!isset($question['shuffled_options'])) {
+                    $options = $options->shuffle();
+                    $this->questions[$index]['shuffled_options'] = $options->toArray();
+                }
+            } else {
+                // Use limited options without shuffle
+                if (!isset($question['limited_options'])) {
+                    $this->questions[$index]['limited_options'] = $options->toArray();
+                }
+            }
+        }
+    }
+
+    public function loadQuestions()
+    {
+        $questions = collect();
+
+        foreach ($this->test->subjects as $subject) {
+            $query = Question::with('options') // Load options relationship
+                ->where('subject_id', $subject->id)
+                ->where('status', 1);
+
+            // Apply filters from pivot
+            if ($subject->pivot->question_type) {
+                $query->where('question_type', $subject->pivot->question_type);
+            }
+
+            if ($subject->pivot->difficulty_level) {
+                $query->where('difficulty_level', $subject->pivot->difficulty_level);
+            }
+
+            // Get questions
+            $subjectQuestions = $query->inRandomOrder()
+                ->limit($subject->pivot->question_count)
+                ->get();
+
+            // Randomize questions if enabled
+            if ($subject->pivot->randomize_questions) {
+                $subjectQuestions = $subjectQuestions->shuffle();
+            }
+
+            // Process each question for this subject
+            $subjectQuestions = $subjectQuestions->map(function ($question) use ($subject) {
+                if ($question->question_type == 1) { // Multiple choice
+                    $options = $question->options;
+                    
+                    // Apply options_count limit if set
+                    if ($subject->pivot->options_count && $subject->pivot->options_count > 0) {
+                        $options = $options->take($subject->pivot->options_count);
+                    }
+                    
+                    // Randomize answers if enabled
+                    if ($subject->pivot->randomize_answers) {
+                        $options = $options->shuffle();
+                        $question->shuffled_options = $options;
+                    } else {
+                        // Keep original order but still apply limit
+                        $question->limited_options = $options;
+                    }
+                }
+                return $question;
+            });
+
+            $questions = $questions->merge($subjectQuestions);
+        }
+
+        // Convert to array with all attributes
+        $this->questions = $questions->map(function ($question) {
+            $questionArray = $question->toArray();
+            
+            // Explicitly include timer field
+            $questionArray['timer'] = $question->timer;
+            
+            // Get correct answer from options
+            $correctOption = $question->options->where('is_correct', true)->first();
+            $questionArray['correct_answer'] = $correctOption ? $correctOption->option_text : null;
+            
+            // Ensure shuffled_options is preserved if it exists
+            if (isset($question->shuffled_options)) {
+                $questionArray['shuffled_options'] = $question->shuffled_options->toArray();
+            } elseif (isset($question->limited_options)) {
+                // Use limited options if no shuffle
+                $questionArray['limited_options'] = $question->limited_options->toArray();
+            }
+            
+            return $questionArray;
+        })->toArray();
+    }
+
+    public function calculateTimeRemaining()
+    {
+        $startedAt = $this->attempt->started_at;
+        $duration = $this->test->duration; // in minutes
+        
+        // Use copy() to avoid mutating the original timestamp
+        $endTime = $startedAt->copy()->addMinutes($duration);
+        
+        // Calculate remaining seconds
+        $remainingSeconds = now()->diffInSeconds($endTime, false);
+        
+        // Cast to integer and ensure non-negative
+        $this->timeRemaining = (int) max(0, $remainingSeconds);
+
+        // Auto-submit if time is up
+        if ($this->timeRemaining <= 0) {
+            $this->submitTest();
+        }
+    }
+
+    public function saveAnswer($questionId, $answer)
+    {
+        // Check if question is locked
+        if (in_array($questionId, $this->locked_questions)) {
+            $this->dispatch('toast', ['type' => 'error', 'message' => 'This question is locked due to timer expiry.']);
+            return;
+        }
+
+        $this->answers[$questionId] = $answer;
+        
+        // Save to database
+        $this->attempt->update([
+            'answers' => $this->answers,
+        ]);
+    }
+
+    public function goToQuestion($index)
+    {
+        $this->currentQuestionIndex = $index;
+        
+        // Track when this question was first viewed
+        $questionId = $this->questions[$index]['id'] ?? null;
+        if ($questionId && !isset($this->question_start_times[$questionId])) {
+            $this->question_start_times[$questionId] = now()->timestamp;
+        }
+    }
+
+    public function nextQuestion()
+    {
+        if ($this->currentQuestionIndex < count($this->questions) - 1) {
+            $this->currentQuestionIndex++;
+        }
+    }
+
+    public function previousQuestion()
+    {
+        if ($this->currentQuestionIndex > 0) {
+            $this->currentQuestionIndex--;
+        }
+    }
+
+    public function submitTest()
+    {
+        // Calculate score
+        $score = $this->calculateScore();
+
+        // Calculate duration in minutes
+        $durationMinutes = $this->attempt->started_at->diffInMinutes(now());
+
+        // Update attempt
+        $this->attempt->update([
+            'submitted_at' => now(),
+            'score' => $score,
+            'status' => 'graded',
+            'answers' => $this->answers,
+            'duration_minutes' => $durationMinutes,
+        ]);
+
+        // Redirect based on show_results setting
+        if ($this->test->show_results) {
+            session()->flash('success', 'Test submitted successfully!');
+            return redirect()->route('student.test.result', $this->test);
+        } else {
+            session()->flash('success', 'Test submitted successfully!');
+            return redirect()->route('student.dashboard');
+        }
+    }
+
+    public function calculateScore()
+    {
+        $totalScore = 0;
+        $correctAnswers = 0;
+        $wrongAnswers = 0;
+        $unanswered = 0;
+
+        foreach ($this->questions as $question) {
+            $questionId = $question['id'];
+            $userAnswer = $this->answers[$questionId] ?? null;
+
+            if ($userAnswer === null) {
+                $unanswered++;
+                $totalScore += $this->test->unanswered_score;
+            } elseif ($userAnswer == $question['correct_answer']) {
+                $correctAnswers++;
+                $totalScore += $this->test->correct_score;
+            } else {
+                $wrongAnswers++;
+                $totalScore += $this->test->wrong_score;
+            }
+        }
+
+        return min($totalScore, $this->test->max_score);
+    }
+
+    public function getCurrentQuestion()
+    {
+        return $this->questions[$this->currentQuestionIndex] ?? null;
+    }
+
+    public function getAnsweredCount()
+    {
+        return count($this->answers);
+    }
+
+    public function render()
+    {
+        return view('livewire.take-test');
+    }
+}
