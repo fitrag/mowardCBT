@@ -252,7 +252,7 @@ class TakeTest extends Component
     public function calculateTimeRemaining()
     {
         $startedAt = $this->attempt->started_at;
-        $duration = $this->test->duration; // in minutes
+        $duration = (int) $this->test->duration; // Cast to integer
         
         // Use copy() to avoid mutating the original timestamp
         $endTime = $startedAt->copy()->addMinutes($duration);

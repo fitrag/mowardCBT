@@ -28,12 +28,18 @@ window.Toast = Toast;
 document.addEventListener('livewire:navigated', () => {
     // Listen for toast events from Livewire
     Livewire.on('toast', (data) => {
-        // data is an array, take the first item
-        const payload = data[0];
-        Toast.fire({
-            icon: payload.type,
-            title: payload.message
-        });
+        // Handle both array and direct object formats
+        const payload = Array.isArray(data) ? data[0] : data;
+
+        // Check if payload exists and has required properties
+        if (payload && payload.type && payload.message) {
+            Toast.fire({
+                icon: payload.type,
+                title: payload.message
+            });
+        } else {
+            console.error('Invalid toast payload:', data);
+        }
     });
 });
 

@@ -88,9 +88,10 @@ class Index extends Component
             $path = 'questions/' . $imageName;
             
             Storage::disk('public')->put($path, base64_decode($image));
+            $url = asset('public/storage/' . $path);
             
             return [
-                'url' => Storage::url($path)
+                'url' => $url
             ];
         } catch (\Exception $e) {
             return [
@@ -184,7 +185,7 @@ class Index extends Component
 
     public function create()
     {
-        $this->reset(['subject_id', 'question', 'question_type', 'difficulty_level', 'status', 'audio_file', 'question_image', 'timer_seconds', 'questionId', 'currentAudioFile', 'currentQuestionImage']);
+        $this->reset(['subject_id', 'question', 'question_type', 'difficulty_level', 'status', 'audio_file', 'question_image', 'timer', 'questionId', 'currentAudioFile', 'currentQuestionImage']);
         $this->status = true;
         $this->question_type = 1;
         $this->difficulty_level = 1;

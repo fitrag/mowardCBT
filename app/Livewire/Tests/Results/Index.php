@@ -79,8 +79,8 @@ class Index extends Component
     {
         $attempt = TestAttempt::findOrFail($attemptId);
         
-        // Check if attempt belongs to this test
-        if ($attempt->test_id !== $this->test->id) {
+        // Check if attempt belongs to this test (use loose comparison to handle type mismatch)
+        if ($attempt->test_id != $this->test->id) {
             $this->dispatch('toast', ['type' => 'error', 'message' => 'Invalid attempt.']);
             return;
         }

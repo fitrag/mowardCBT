@@ -1,10 +1,10 @@
-<div>
+<div class="w-full px-2 sm:px-6 lg:px-8 py-3 sm:py-8">
     <!-- Hero Section -->
-    <div class="mb-8">
-        <div class="bg-gradient-to-r from-indigo-600 to-blue-600 rounded-2xl shadow-lg p-8 text-white">
+    <div class="mb-4 sm:mb-8">
+        <div class="bg-gradient-to-r from-indigo-600 to-blue-600 rounded-2xl shadow-lg p-6 sm:p-8 text-white">
             <div class="flex items-center justify-between">
                 <div>
-                    <h1 class="text-3xl font-bold mb-2">Welcome back, {{ auth()->user()->name }}! 👋</h1>
+                    <h1 class="text-2xl sm:text-3xl font-bold mb-2">Welcome back, {{ auth()->user()->name }}! 👋</h1>
                     <p class="text-indigo-100">Ready to ace your tests? Let's get started!</p>
                 </div>
                 <div class="hidden md:block">
@@ -17,8 +17,8 @@
     </div>
 
     <!-- Stats Overview -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div class="bg-white rounded-xl shadow-sm ring-1 ring-slate-900/5 p-6">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 mb-4 sm:mb-8">
+        <div class="bg-white rounded-xl shadow-sm ring-1 ring-slate-900/5 p-4 sm:p-6">
             <div class="flex items-center gap-4">
                 <div class="flex-shrink-0">
                     <div class="h-12 w-12 rounded-lg bg-green-100 flex items-center justify-center">
@@ -34,7 +34,7 @@
             </div>
         </div>
 
-        <div class="bg-white rounded-xl shadow-sm ring-1 ring-slate-900/5 p-6">
+        <div class="bg-white rounded-xl shadow-sm ring-1 ring-slate-900/5 p-4 sm:p-6">
             <div class="flex items-center gap-4">
                 <div class="flex-shrink-0">
                     <div class="h-12 w-12 rounded-lg bg-blue-100 flex items-center justify-center">
@@ -50,7 +50,7 @@
             </div>
         </div>
 
-        <div class="bg-white rounded-xl shadow-sm ring-1 ring-slate-900/5 p-6">
+        <div class="bg-white rounded-xl shadow-sm ring-1 ring-slate-900/5 p-4 sm:p-6">
             <div class="flex items-center gap-4">
                 <div class="flex-shrink-0">
                     <div class="h-12 w-12 rounded-lg bg-purple-100 flex items-center justify-center">
@@ -69,17 +69,17 @@
 
     <!-- Active Tests Section -->
     @if(count($activeTests) > 0)
-        <div class="mb-8">
+        <div class="mb-4 sm:mb-8">
             <div class="flex items-center gap-2 mb-4">
                 <div class="h-8 w-1 bg-green-600 rounded-full"></div>
                 <h2 class="text-xl font-bold text-slate-900">Active Tests</h2>
                 <span class="px-2 py-1 text-xs font-semibold text-green-700 bg-green-100 rounded-full">Available Now</span>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                 @foreach($activeTests as $test)
                     <div class="bg-white rounded-xl shadow-sm ring-1 ring-slate-900/5 hover:shadow-md transition-shadow overflow-hidden">
-                        <div class="p-6">
+                        <div class="p-4 sm:p-6">
                             <div class="flex items-start justify-between mb-4">
                                 <div class="flex-1">
                                     <h3 class="text-lg font-semibold text-slate-900 mb-1">{{ $test->name }}</h3>
@@ -141,16 +141,16 @@
 
     <!-- Upcoming Tests Section -->
     @if(count($upcomingTests) > 0)
-        <div class="mb-8">
+        <div class="mb-4 sm:mb-8">
             <div class="flex items-center gap-2 mb-4">
                 <div class="h-8 w-1 bg-blue-600 rounded-full"></div>
                 <h2 class="text-xl font-bold text-slate-900">Upcoming Tests</h2>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                 @foreach($upcomingTests as $test)
                     <div class="bg-white rounded-xl shadow-sm ring-1 ring-slate-900/5 overflow-hidden opacity-75">
-                        <div class="p-6">
+                        <div class="p-4 sm:p-6">
                             <div class="flex items-start justify-between mb-4">
                                 <div class="flex-1">
                                     <h3 class="text-lg font-semibold text-slate-900 mb-1">{{ $test->name }}</h3>
@@ -194,19 +194,19 @@
 
     <!-- Completed Tests Section -->
     @if(count($completedTests) > 0)
-        <div class="mb-8">
+        <div class="mb-4 sm:mb-8">
             <div class="flex items-center gap-2 mb-4">
                 <div class="h-8 w-1 bg-purple-600 rounded-full"></div>
                 <h2 class="text-xl font-bold text-slate-900">Completed Tests</h2>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                 @foreach($completedTests as $test)
                     @php
                         $attempt = $this->getUserAttempt($test);
                     @endphp
                     <div class="bg-white rounded-xl shadow-sm ring-1 ring-slate-900/5 overflow-hidden">
-                        <div class="p-6">
+                        <div class="p-4 sm:p-6">
                             <div class="flex items-start justify-between mb-4">
                                 <div class="flex-1">
                                     <h3 class="text-lg font-semibold text-slate-900 mb-1">{{ $test->name }}</h3>

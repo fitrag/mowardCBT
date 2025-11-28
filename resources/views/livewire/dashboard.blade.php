@@ -32,17 +32,10 @@
                         <path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" />
                     </svg>
                 </div>
-                <p class="ml-16 truncate text-sm font-medium text-slate-500">Total Users</p>
+                <p class="ml-16 truncate text-sm font-medium text-slate-500">Total Students</p>
             </dt>
             <dd class="ml-16 flex items-baseline pb-1 sm:pb-2">
-                <p class="text-2xl font-semibold text-slate-900">1,240</p>
-                <p class="ml-2 flex items-baseline text-sm font-semibold text-emerald-600">
-                    <svg class="h-4 w-4 flex-shrink-0 self-center text-emerald-500" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                        <path fill-rule="evenodd" d="M10 17a.75.75 0 01-.75-.75V5.612L5.29 9.77a.75.75 0 01-1.08-1.04l5.25-5.5a.75.75 0 011.08 0l5.25 5.5a.75.75 0 11-1.08 1.04l-3.96-4.158V16.25A.75.75 0 0110 17z" clip-rule="evenodd" />
-                    </svg>
-                    <span class="sr-only">Increased by</span>
-                    12%
-                </p>
+                <p class="text-2xl font-semibold text-slate-900">{{ number_format($totalStudents) }}</p>
             </dd>
         </div>
 
@@ -54,17 +47,11 @@
                         <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
                     </svg>
                 </div>
-                <p class="ml-16 truncate text-sm font-medium text-slate-500">Active Exams</p>
+                <p class="ml-16 truncate text-sm font-medium text-slate-500">Active Tests</p>
             </dt>
             <dd class="ml-16 flex items-baseline pb-1 sm:pb-2">
-                <p class="text-2xl font-semibold text-slate-900">24</p>
-                <p class="ml-2 flex items-baseline text-sm font-semibold text-emerald-600">
-                    <svg class="h-4 w-4 flex-shrink-0 self-center text-emerald-500" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                        <path fill-rule="evenodd" d="M10 17a.75.75 0 01-.75-.75V5.612L5.29 9.77a.75.75 0 01-1.08-1.04l5.25-5.5a.75.75 0 011.08 0l5.25 5.5a.75.75 0 11-1.08 1.04l-3.96-4.158V16.25A.75.75 0 0110 17z" clip-rule="evenodd" />
-                    </svg>
-                    <span class="sr-only">Increased by</span>
-                    4%
-                </p>
+                <p class="text-2xl font-semibold text-slate-900">{{ $activeTests }}</p>
+                <p class="ml-2 text-xs text-slate-500">of {{ $totalTests }} total</p>
             </dd>
         </div>
 
@@ -79,14 +66,7 @@
                 <p class="ml-16 truncate text-sm font-medium text-slate-500">Completion Rate</p>
             </dt>
             <dd class="ml-16 flex items-baseline pb-1 sm:pb-2">
-                <p class="text-2xl font-semibold text-slate-900">94.2%</p>
-                <p class="ml-2 flex items-baseline text-sm font-semibold text-emerald-600">
-                    <svg class="h-4 w-4 flex-shrink-0 self-center text-emerald-500" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                        <path fill-rule="evenodd" d="M10 17a.75.75 0 01-.75-.75V5.612L5.29 9.77a.75.75 0 01-1.08-1.04l5.25-5.5a.75.75 0 011.08 0l5.25 5.5a.75.75 0 11-1.08 1.04l-3.96-4.158V16.25A.75.75 0 0110 17z" clip-rule="evenodd" />
-                    </svg>
-                    <span class="sr-only">Increased by</span>
-                    1.2%
-                </p>
+                <p class="text-2xl font-semibold text-slate-900">{{ $completionRate }}%</p>
             </dd>
         </div>
 
@@ -101,14 +81,7 @@
                 <p class="ml-16 truncate text-sm font-medium text-slate-500">Avg. Score</p>
             </dt>
             <dd class="ml-16 flex items-baseline pb-1 sm:pb-2">
-                <p class="text-2xl font-semibold text-slate-900">86.5</p>
-                <p class="ml-2 flex items-baseline text-sm font-semibold text-rose-600">
-                    <svg class="h-4 w-4 flex-shrink-0 self-center text-rose-500" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                        <path fill-rule="evenodd" d="M10 3a.75.75 0 01.75.75v10.638l3.96-4.158a.75.75 0 111.08 1.04l-5.25 5.5a.75.75 0 01-1.08 0l-5.25-5.5a.75.75 0 111.08-1.04l3.96 4.158V3.75A.75.75 0 0110 3z" clip-rule="evenodd" />
-                    </svg>
-                    <span class="sr-only">Decreased by</span>
-                    0.5%
-                </p>
+                <p class="text-2xl font-semibold text-slate-900">{{ $avgScore }}</p>
             </dd>
         </div>
     </div>
@@ -141,39 +114,28 @@
                     <h3 class="text-base font-semibold leading-6 text-slate-900">Recent Activity</h3>
                     <div class="mt-6 flow-root">
                         <ul role="list" class="-my-5 divide-y divide-slate-100">
+                            @forelse($recentActivities as $activity)
                             <li class="py-5">
                                 <div class="relative flex gap-x-4">
                                     <div class="flex-auto">
                                         <div class="flex items-baseline justify-between gap-x-4">
-                                            <p class="text-sm font-semibold leading-6 text-slate-900">New User Registered</p>
-                                            <p class="flex-none text-xs text-slate-500">1h ago</p>
+                                            <p class="text-sm font-semibold leading-6 text-slate-900">{{ $activity->user->name }}</p>
+                                            <p class="flex-none text-xs text-slate-500">{{ $activity->submitted_at->diffForHumans() }}</p>
                                         </div>
-                                        <p class="mt-1 text-sm leading-6 text-slate-500">Sarah Smith joined as a participant.</p>
+                                        <p class="mt-1 text-sm leading-6 text-slate-500">
+                                            Completed <strong>{{ $activity->test->name }}</strong> 
+                                            with score {{ number_format($activity->score, 1) }}/{{ $activity->test->max_score }}
+                                        </p>
                                     </div>
                                 </div>
                             </li>
+                            @empty
                             <li class="py-5">
-                                <div class="relative flex gap-x-4">
-                                    <div class="flex-auto">
-                                        <div class="flex items-baseline justify-between gap-x-4">
-                                            <p class="text-sm font-semibold leading-6 text-slate-900">Exam Completed</p>
-                                            <p class="flex-none text-xs text-slate-500">2h ago</p>
-                                        </div>
-                                        <p class="mt-1 text-sm leading-6 text-slate-500">Mathematics Final completed by 15 students.</p>
-                                    </div>
+                                <div class="text-center text-sm text-slate-500">
+                                    No recent activities yet
                                 </div>
                             </li>
-                            <li class="py-5">
-                                <div class="relative flex gap-x-4">
-                                    <div class="flex-auto">
-                                        <div class="flex items-baseline justify-between gap-x-4">
-                                            <p class="text-sm font-semibold leading-6 text-slate-900">System Update</p>
-                                            <p class="flex-none text-xs text-slate-500">1d ago</p>
-                                        </div>
-                                        <p class="mt-1 text-sm leading-6 text-slate-500">Version 2.0.1 successfully deployed.</p>
-                                    </div>
-                                </div>
-                            </li>
+                            @endforelse
                         </ul>
                     </div>
                     <div class="mt-6 border-t border-slate-100 pt-4">

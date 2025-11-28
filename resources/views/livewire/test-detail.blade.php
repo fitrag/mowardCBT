@@ -1,6 +1,6 @@
-<div>
+<div class="w-full px-2 sm:px-6 lg:px-8 py-3 sm:py-8">
     <!-- Back Button -->
-    <div class="mb-6">
+    <div class="mb-4 sm:mb-6">
         <a href="{{ route('student.dashboard') }}" wire:navigate class="inline-flex items-center text-sm text-slate-600 hover:text-slate-900 transition-colors">
             <svg class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
@@ -9,14 +9,14 @@
         </a>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-6">
         <!-- Main Content -->
-        <div class="lg:col-span-2 space-y-6">
+        <div class="lg:col-span-2 space-y-3 sm:space-y-6">
             <!-- Test Header -->
-            <div class="bg-white rounded-2xl shadow-sm ring-1 ring-slate-900/5 p-6">
+            <div class="bg-white rounded-2xl shadow-sm ring-1 ring-slate-900/5 p-3 sm:p-6">
                 <div class="flex items-start justify-between mb-4">
                     <div>
-                        <h1 class="text-3xl font-bold text-slate-900 mb-2">{{ $test->name }}</h1>
+                        <h1 class="text-2xl sm:text-3xl font-bold text-slate-900 mb-2">{{ $test->name }}</h1>
                         <p class="text-slate-600">{{ $test->description }}</p>
                     </div>
                     <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
@@ -26,7 +26,7 @@
             </div>
 
             <!-- Test Information -->
-            <div class="bg-white rounded-2xl shadow-sm ring-1 ring-slate-900/5 p-6">
+            <div class="bg-white rounded-2xl shadow-sm ring-1 ring-slate-900/5 p-3 sm:p-6">
                 <h2 class="text-lg font-semibold text-slate-900 mb-4">Test Information</h2>
                 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -89,7 +89,7 @@
             </div>
 
             <!-- Instructions -->
-            <div class="bg-white rounded-2xl shadow-sm ring-1 ring-slate-900/5 p-6">
+            <div class="bg-white rounded-2xl shadow-sm ring-1 ring-slate-900/5 p-3 sm:p-6">
                 <h2 class="text-lg font-semibold text-slate-900 mb-4">Instructions</h2>
                 
                 <div class="prose prose-slate max-w-none">
@@ -112,7 +112,7 @@
         <!-- Sidebar -->
         <div class="lg:col-span-1">
             <!-- Start Test Card -->
-            <div class="bg-white rounded-2xl shadow-sm ring-1 ring-slate-900/5 p-6 sticky top-6">
+            <div class="bg-white rounded-2xl shadow-sm ring-1 ring-slate-900/5 p-3 sm:p-6 sticky top-6">
                 <h3 class="text-lg font-semibold text-slate-900 mb-4">Ready to Start?</h3>
                 
                 @if($test->use_token)
@@ -218,10 +218,18 @@
                 <div class="mt-5 sm:mt-4 sm:flex sm:flex-row-reverse gap-3">
                     <button 
                         wire:click="confirmStartTest"
+                        wire:loading.attr="disabled"
                         type="button" 
-                        class="w-full inline-flex justify-center rounded-lg border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:ml-3 sm:w-auto sm:text-sm"
+                        class="w-full inline-flex justify-center rounded-lg border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                        Yes, Start Test
+                        <span wire:loading.remove wire:target="confirmStartTest">Yes, Start Test</span>
+                        <span wire:loading wire:target="confirmStartTest" class="flex items-center gap-2">
+                            <svg class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            Starting...
+                        </span>
                     </button>
                     <button 
                         wire:click="$set('showConfirmation', false)"

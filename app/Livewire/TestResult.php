@@ -26,8 +26,8 @@ class TestResult extends Component
             ->latest()
             ->firstOrFail();
 
-        // Verify user owns this attempt
-        if ($this->attempt->user_id !== $user->id) {
+        // Verify user owns this attempt (use loose comparison to handle type mismatch)
+        if ($this->attempt->user_id != $user->id) {
             abort(403, 'Unauthorized access to test results.');
         }
 

@@ -17,12 +17,14 @@ Route::get('/students', \App\Livewire\Students\Index::class)->middleware('auth')
 Route::get('/modules', \App\Livewire\Modules\Index::class)->middleware('auth')->name('modules.index');
 Route::get('/subjects', \App\Livewire\Subjects\Index::class)->middleware('auth')->name('subjects.index');
 Route::post('/upload-image', [\App\Http\Controllers\ImageUploadController::class, 'upload'])->middleware('auth')->name('upload.image');
+Route::post('/ckeditor/upload', [\App\Http\Controllers\CKEditorUploadController::class, 'upload'])->middleware('auth')->name('ckeditor.upload');
 Route::get('/questions', \App\Livewire\Questions\Index::class)->middleware('auth')->name('questions.index');
 Route::get('/tests', \App\Livewire\Tests\Index::class)->middleware('auth')->name('tests.index');
 Route::get('/tests/create', \App\Livewire\Tests\Create::class)->middleware('auth')->name('tests.create');
 Route::get('/tests/{test}/edit', \App\Livewire\Tests\Edit::class)->middleware('auth')->name('tests.edit');
 Route::get('/tests/{test}/results', \App\Livewire\Tests\Results\Index::class)->middleware('auth')->name('tests.results');
 Route::get('/tokens', \App\Livewire\Tokens\Index::class)->middleware('auth')->name('tokens.index');
+Route::get('/reports/test-results', \App\Livewire\Reports\TestResults::class)->middleware('auth')->name('reports.test-results');
 
 // Student Routes
 Route::get('/student/dashboard', \App\Livewire\StudentDashboard::class)->middleware('auth')->name('student.dashboard');
