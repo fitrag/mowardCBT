@@ -21,12 +21,27 @@ class Index extends Component
 
     #[Url(history: true)]
     public $statusFilter = '';
+    
+    #[Url(history: true)]
+    public $viewMode = 'modern'; // modern or classic
 
     public $perPage = 10;
+    
+    public $selectedAttempt = null;
 
     public function mount(Test $test)
     {
         $this->test = $test;
+    }
+    
+    public function viewAttemptDetail($attemptId)
+    {
+        $this->selectedAttempt = TestAttempt::with('user')->findOrFail($attemptId);
+    }
+    
+    public function closeModal()
+    {
+        $this->selectedAttempt = null;
     }
 
     public function updatedSearch()

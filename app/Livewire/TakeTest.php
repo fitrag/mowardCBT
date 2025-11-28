@@ -138,7 +138,14 @@ class TakeTest extends Component
             if ($subject->pivot->randomize_answers) {
                 // Check if already shuffled (has shuffled_options key)
                 if (!isset($question['shuffled_options'])) {
-                    $options = $options->shuffle()->values(); // values() resets array keys
+                    // Use multiple shuffles with random sorting for better randomization
+                    $options = $options->shuffle();
+                    
+                    // Additional randomization: sort by random values
+                    $options = $options->sortBy(function() {
+                        return random_int(0, 999999);
+                    })->values(); // values() resets array keys
+                    
                     $this->questions[$index]['shuffled_options'] = $options->toArray();
                 }
             } else {
@@ -199,7 +206,14 @@ class TakeTest extends Component
                     
                     // Randomize answers if enabled
                     if ($subject->pivot->randomize_answers) {
-                        $options = $options->shuffle()->values(); // values() resets array keys
+                        // Use multiple shuffles with random sorting for better randomization
+                        $options = $options->shuffle();
+                        
+                        // Additional randomization: sort by random values
+                        $options = $options->sortBy(function() {
+                            return random_int(0, 999999);
+                        })->values(); // values() resets array keys
+                        
                         $question->shuffled_options = $options->toArray();
                     } else {
                         // Keep original order but still apply limit
@@ -330,19 +344,22 @@ class TakeTest extends Component
 
     public function submitTest()
     {
-        // Calculate score
-        $score = $this->calculateScore();
+        // Calculate score and statistics
+        $stats = $this->calculateScore();
 
-        // Calculate duration in minutes
-        $durationMinutes = $this->attempt->started_at->diffInMinutes(now());
+        // Calculate duration in seconds
+        $durationSeconds = $this->attempt->started_at->diffInSeconds(now());
 
         // Update attempt
         $this->attempt->update([
             'submitted_at' => now(),
-            'score' => $score,
+            'score' => $stats['score'],
+            'correct_answers' => $stats['correct_answers'],
+            'wrong_answers' => $stats['wrong_answers'],
             'status' => 'graded',
             'answers' => $this->answers,
-            'duration_minutes' => $durationMinutes,
+            'duration_seconds' => $durationSeconds,
+            'duration_minutes' => round($durationSeconds / 60),
         ]);
 
         // Redirect based on show_results setting
@@ -392,7 +409,16 @@ class TakeTest extends Component
         }
         
         // Ensure score is within bounds [0, max_score]
-        return max(0, min($normalizedScore, $this->test->max_score));
+        $finalScore = max(0, min($normalizedScore, $this->test->max_score));
+        
+        // Return score and statistics
+        return [
+            'score' => $finalScore,
+            'correct_answers' => $correctAnswers,
+            'wrong_answers' => $wrongAnswers,
+            'unanswered' => $unanswered,
+            'total_questions' => $totalQuestions,
+        ];
     }
 
     public function getCurrentQuestion()

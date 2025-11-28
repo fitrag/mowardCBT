@@ -15,10 +15,13 @@ class TestAttempt extends Model
         'started_at',
         'submitted_at',
         'score',
+        'correct_answers',
+        'wrong_answers',
         'answers',
         'questions',
         'status',
         'duration_minutes',
+        'duration_seconds',
         'question_start_times',
         'locked_questions',
     ];
