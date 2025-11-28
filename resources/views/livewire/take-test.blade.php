@@ -16,28 +16,66 @@
             $wire.submitTest();
         }
     }, 1000);
+
+    // Anti-Cheating Measures
+    @if($test->enable_safe_browser)
+        // 1. Disable Right Click
+        document.addEventListener('contextmenu', event => event.preventDefault());
+
+        // 2. Disable Dev Tools shortcuts
+        document.addEventListener('keydown', function(e) {
+            if (
+                e.keyCode === 123 || // F12
+                (e.ctrlKey && e.shiftKey && e.keyCode === 73) || // Ctrl+Shift+I
+                (e.ctrlKey && e.shiftKey && e.keyCode === 74) || // Ctrl+Shift+J
+                (e.ctrlKey && e.keyCode === 85) // Ctrl+U
+            ) {
+                e.preventDefault();
+                return false;
+            }
+        });
+
+        // 3. Detect Tab Switching / Window Blur
+        const handleViolation = () => {
+            $wire.dispatch('toast', {type: 'error', message: 'Kamu ketahuan nyontek silahkan bertemu operator untuk melapor'});
+            $wire.submitTest();
+        };
+
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                handleViolation();
+            }
+        });
+
+        window.addEventListener('blur', () => {
+            // Optional: strict mode - uncomment to enable strict window focus check
+            // handleViolation();
+        });
+    @endif
+
 ">
     <!-- Header with Timer -->
-    <div class="bg-white border-b border-slate-200 sticky top-0 z-10">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex items-center justify-between h-16">
-                <div>
-                    <h1 class="text-lg font-semibold text-slate-900">{{ $test->name }}</h1>
-                    <p class="text-sm text-slate-500">Question {{ $currentQuestionIndex + 1 }} of {{ count($questions) }}</p>
+    <!-- Header with Timer -->
+    <div class="bg-white border-b border-slate-200 sticky top-0 z-10 shadow-sm">
+        <div class="px-4 sm:px-6 lg:px-12">
+            <div class="flex flex-col sm:flex-row items-center justify-between py-3 sm:h-16 gap-3 sm:gap-0">
+                <div class="text-center sm:text-left w-full sm:w-auto">
+                    <h1 class="text-base sm:text-lg font-semibold text-slate-900 leading-tight line-clamp-1">{{ $test->name }}</h1>
+                    <p class="text-xs sm:text-sm text-slate-500">Question {{ $currentQuestionIndex + 1 }} of {{ count($questions) }}</p>
                 </div>
                 
-                <div class="flex items-center gap-4">
+                <div class="flex items-center justify-between sm:justify-end w-full sm:w-auto gap-3 sm:gap-4">
                     <!-- Timer -->
-                    <div class="flex items-center gap-2 px-4 py-2 rounded-lg" 
+                    <div class="flex items-center gap-1.5 sm:gap-2 px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg text-sm sm:text-base" 
                          :class="timeRemaining < 300 ? 'bg-red-100 text-red-700' : 'bg-blue-100 text-blue-700'">
-                        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <svg class="h-4 w-4 sm:h-5 sm:w-5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
                         <span class="font-mono font-semibold" x-text="formatTime(timeRemaining)"></span>
                     </div>
 
                     <!-- Progress -->
-                    <div class="text-sm text-slate-600">
+                    <div class="text-xs sm:text-sm text-slate-600 whitespace-nowrap">
                         <span class="font-semibold">{{ $this->getAnsweredCount() }}</span> / {{ count($questions) }} answered
                     </div>
                 </div>
@@ -45,10 +83,10 @@
         </div>
     </div>
 
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
-            <!-- Question Display -->
-            <div class="lg:col-span-3">
+    <div class="px-6 lg:px-12 py-8">
+        <div class="grid grid-cols-1 xl:grid-cols-12 gap-8">
+            <!-- Question Display - Full Width on Mobile, 9 cols on XL -->
+            <div class="xl:col-span-9">
                 @php
                     $currentQuestion = $this->getCurrentQuestion();
                 @endphp
@@ -225,13 +263,13 @@
                                                 wire:click="saveAnswer({{ $currentQuestion['id'] }}, '{{ $optionText }}')"
                                                 @if($isSelected) checked @endif
                                                 x-bind:disabled="isLocked"
-                                                class="mt-1 h-4 w-4 text-indigo-600 focus:ring-indigo-500"
+                                                class="hidden"
                                             >
                                             <div class="flex-1">
                                                 <span class="inline-flex items-center justify-center h-6 w-6 rounded-full {{ $isSelected ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-600' }} font-semibold text-sm mr-2">
                                                     {{ $letter }}
                                                 </span>
-                                                <span class="text-slate-700">{{ $optionText }}</span>
+                                                <span class="text-slate-700 prose prose-sm max-w-none inline-block align-middle">{!! $optionText !!}</span>
                                             </div>
                                         </label>
                                     @endif
@@ -268,10 +306,18 @@
                     <div class="flex items-center justify-between">
                         <button 
                             wire:click="previousQuestion"
+                            wire:loading.attr="disabled"
                             @if($currentQuestionIndex === 0) disabled @endif
-                            class="px-4 py-2 bg-white border border-slate-300 text-slate-700 font-medium rounded-lg hover:bg-slate-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            class="px-4 py-2 bg-white border border-slate-300 text-slate-700 font-medium rounded-lg hover:bg-slate-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                         >
-                            ← Previous
+                            <span wire:loading.remove wire:target="previousQuestion">← Previous</span>
+                            <span wire:loading wire:target="previousQuestion" class="flex items-center gap-2">
+                                <svg class="animate-spin h-4 w-4 text-slate-700" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                                Loading...
+                            </span>
                         </button>
 
                         @if($currentQuestionIndex === count($questions) - 1)
@@ -284,31 +330,58 @@
                         @else
                             <button 
                                 wire:click="nextQuestion"
-                                class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg transition-colors"
+                                wire:loading.attr="disabled"
+                                class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg transition-colors flex items-center gap-2"
                             >
-                                Next →
+                                <span wire:loading.remove wire:target="nextQuestion">Next →</span>
+                                <span wire:loading wire:target="nextQuestion" class="flex items-center gap-2">
+                                    <svg class="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                    </svg>
+                                    Loading...
+                                </span>
                             </button>
                         @endif
                     </div>
                 @endif
             </div>
 
-            <!-- Question Navigation Sidebar -->
-            <div class="lg:col-span-1">
+            <!-- Question Navigation Sidebar - 3 cols on XL -->
+            <div class="xl:col-span-3">
                 <div class="bg-white rounded-2xl shadow-sm ring-1 ring-slate-900/5 p-6 sticky top-24">
                     <h3 class="text-sm font-semibold text-slate-900 mb-4">Question Navigator</h3>
                     
                     <div class="grid grid-cols-5 gap-2">
                         @foreach($questions as $index => $question)
+                            @php
+                                $isCurrent = $index === $currentQuestionIndex;
+                                $isAnswered = isset($answers[$question['id']]);
+                                $isLocked = in_array($question['id'], $locked_questions);
+                            @endphp
                             <button 
                                 wire:click="goToQuestion({{ $index }})"
-                                class="h-10 w-10 rounded-lg font-medium text-sm transition-all
-                                    {{ $index === $currentQuestionIndex ? 'bg-indigo-600 text-white' : '' }}
-                                    {{ $index !== $currentQuestionIndex && isset($answers[$question['id']]) ? 'bg-green-100 text-green-700 ring-1 ring-green-200' : '' }}
-                                    {{ $index !== $currentQuestionIndex && !isset($answers[$question['id']]) ? 'bg-slate-100 text-slate-600 hover:bg-slate-200' : '' }}
-                                "
+                                wire:loading.class="opacity-50 cursor-wait"
+                                class="h-10 w-full rounded-lg text-sm font-medium transition-all relative
+                                    {{ $isCurrent ? 'bg-indigo-600 text-white ring-2 ring-indigo-600 ring-offset-2' : 
+                                       ($isAnswered ? 'bg-green-100 text-green-700 hover:bg-green-200 border border-green-300' : 
+                                       ($isLocked ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-200')) }}"
+                                @if($isLocked) disabled @endif
                             >
                                 {{ $index + 1 }}
+                                @if($isLocked)
+                                    <span class="absolute -top-1 -right-1">
+                                        <svg class="h-3 w-3 text-slate-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd" /></svg>
+                                    </span>
+                                @endif
+                                
+                                <!-- Loading Spinner for Sidebar -->
+                                <span wire:loading wire:target="goToQuestion({{ $index }})" class="absolute inset-0 flex items-center justify-center bg-white/50 rounded-lg">
+                                    <svg class="animate-spin h-4 w-4 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                    </svg>
+                                </span>
                             </button>
                         @endforeach
                     </div>
@@ -338,6 +411,33 @@
                     </button>
                 </div>
             </div>
+        </div>
+    </div>
+    <!-- Global Loading Indicator (Navigation) -->
+    <div wire:loading wire:target="nextQuestion, previousQuestion, submitTest, goToQuestion">
+        <!-- Invisible Blocker -->
+        <div class="fixed inset-0 z-[49] bg-transparent"></div>
+        
+        <!-- Centered Box (Exact match to Saver) -->
+        <div class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50">
+            <div class="bg-slate-900/90 backdrop-blur text-white px-6 py-3 rounded-xl shadow-2xl flex items-center gap-3">
+                <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <span class="text-base font-medium">Processing...</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Answer Saving Indicator (Centered) -->
+    <div wire:loading wire:target="saveAnswer" class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50">
+        <div class="bg-slate-900/90 backdrop-blur text-white px-6 py-3 rounded-xl shadow-2xl flex items-center gap-3">
+            <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <span class="text-base font-medium">Saving answer...</span>
         </div>
     </div>
 </div>

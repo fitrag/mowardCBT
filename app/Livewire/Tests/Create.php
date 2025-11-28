@@ -28,12 +28,15 @@ class Create extends Component
     public $duration = 60;
 
     #[Rule('boolean')]
-    public $show_results = true;
+    public $show_results = false;
 
     #[Rule('boolean')]
-    public $show_result_details = true;
+    public $show_result_details = false;
 
-    #[Rule('required|numeric|min:0')]
+    #[Rule('boolean')]
+    public $enable_safe_browser = false;
+
+    #[Rule('numeric|min:0')]
     public $correct_score = 1.00;
 
     #[Rule('required|numeric')]
@@ -133,10 +136,10 @@ class Create extends Component
             'duration' => 'required|integer|min:1',
             'show_results' => 'boolean',
             'show_result_details' => 'boolean',
-            'correct_score' => 'required|numeric|min:0',
+            'enable_safe_browser' => 'boolean',
+            'correct_score' => 'numeric|min:0',
             'wrong_score' => 'required|numeric',
             'unanswered_score' => 'required|numeric',
-            'max_score' => 'nullable|numeric|min:0',
             'max_score' => 'nullable|numeric|min:0',
             'selected_groups' => 'required|array|min:1',
             'subject_configs' => 'required|array|min:1',
@@ -157,7 +160,8 @@ class Create extends Component
             'duration' => $this->duration,
             'show_results' => $this->show_results,
             'show_result_details' => $this->show_result_details,
-            'correct_score' => $this->getCalculatedCorrectScore(),
+            'enable_safe_browser' => $this->enable_safe_browser,
+            'correct_score' => $this->correct_score,
             'wrong_score' => $this->wrong_score,
             'unanswered_score' => $this->unanswered_score,
             'max_score' => 100, // Always 100

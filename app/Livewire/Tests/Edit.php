@@ -30,12 +30,15 @@ class Edit extends Component
     public $duration = 60;
 
     #[Rule('boolean')]
-    public $show_results = true;
+    public $show_results = false;
 
     #[Rule('boolean')]
-    public $show_result_details = true;
+    public $show_result_details = false;
 
-    #[Rule('required|numeric|min:0')]
+    #[Rule('boolean')]
+    public $enable_safe_browser = false;
+
+    #[Rule('numeric|min:0')]
     public $correct_score = 1.00;
 
     #[Rule('required|numeric')]
@@ -61,8 +64,9 @@ class Edit extends Component
         $this->start_date = $test->start_date->format('Y-m-d\TH:i');
         $this->end_date = $test->end_date->format('Y-m-d\TH:i');
         $this->duration = $test->duration;
-        $this->show_results = $test->show_results;
-        $this->show_result_details = $test->show_result_details;
+        $this->show_results = (bool) $test->show_results;
+        $this->show_result_details = (bool) $test->show_result_details;
+        $this->enable_safe_browser = (bool) $test->enable_safe_browser;
         $this->correct_score = $test->correct_score;
         $this->wrong_score = $test->wrong_score;
         $this->unanswered_score = $test->unanswered_score;
@@ -162,6 +166,7 @@ class Edit extends Component
             'duration' => 'required|integer|min:1',
             'show_results' => 'boolean',
             'show_result_details' => 'boolean',
+            'enable_safe_browser' => 'boolean',
             'correct_score' => 'required|numeric|min:0',
             'wrong_score' => 'required|numeric',
             'unanswered_score' => 'required|numeric',
@@ -185,7 +190,8 @@ class Edit extends Component
             'duration' => $this->duration,
             'show_results' => $this->show_results,
             'show_result_details' => $this->show_result_details,
-            'correct_score' => $this->getCalculatedCorrectScore(),
+            'enable_safe_browser' => $this->enable_safe_browser,
+            'correct_score' => $this->correct_score,
             'wrong_score' => $this->wrong_score,
             'unanswered_score' => $this->unanswered_score,
             'max_score' => 100, // Always 100

@@ -338,6 +338,14 @@
                         Show detailed results (correct/wrong answers)
                     </label>
                 </div>
+
+                <div class="flex items-center gap-3">
+                    <x-checkbox wire:model="enable_safe_browser" id="enable_safe_browser" />
+                    <label for="enable_safe_browser" class="text-sm font-medium text-slate-700">
+                        Enable Safe Browser (Anti-Cheating)
+                        <span class="block text-xs text-slate-500 mt-0.5">Detects tab switching, blocks context menu & dev tools</span>
+                    </label>
+                </div>
             </div>
         </div>
 
