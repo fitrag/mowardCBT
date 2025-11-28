@@ -138,7 +138,7 @@ class TakeTest extends Component
             if ($subject->pivot->randomize_answers) {
                 // Check if already shuffled (has shuffled_options key)
                 if (!isset($question['shuffled_options'])) {
-                    $options = $options->shuffle();
+                    $options = $options->shuffle()->values(); // values() resets array keys
                     $this->questions[$index]['shuffled_options'] = $options->toArray();
                 }
             } else {
@@ -190,7 +190,7 @@ class TakeTest extends Component
             // Process each question for this subject
             $subjectQuestions = $subjectQuestions->map(function ($question) use ($subject) {
                 if ($question->question_type == 1) { // Multiple choice
-                    $options = $question->options;
+                    $options = collect($question->options);
                     
                     // Apply options_count limit if set
                     if ($subject->pivot->options_count && $subject->pivot->options_count > 0) {
@@ -199,11 +199,11 @@ class TakeTest extends Component
                     
                     // Randomize answers if enabled
                     if ($subject->pivot->randomize_answers) {
-                        $options = $options->shuffle();
-                        $question->shuffled_options = $options;
+                        $options = $options->shuffle()->values(); // values() resets array keys
+                        $question->shuffled_options = $options->toArray();
                     } else {
                         // Keep original order but still apply limit
-                        $question->limited_options = $options;
+                        $question->limited_options = $options->toArray();
                     }
                 }
                 return $question;
@@ -361,6 +361,8 @@ class TakeTest extends Component
         $correctAnswers = 0;
         $wrongAnswers = 0;
         $unanswered = 0;
+        
+        $totalQuestions = count($this->questions);
 
         foreach ($this->questions as $question) {
             $questionId = $question['id'];
@@ -377,8 +379,20 @@ class TakeTest extends Component
                 $totalScore += $this->test->wrong_score;
             }
         }
-
-        return min($totalScore, $this->test->max_score);
+        
+        // Calculate maximum possible score based on all correct answers
+        $maxPossibleScore = $totalQuestions * $this->test->correct_score;
+        
+        // Normalize to max_score (usually 100)
+        // Formula: (raw_score / max_possible_score) * max_score
+        if ($maxPossibleScore > 0) {
+            $normalizedScore = ($totalScore / $maxPossibleScore) * $this->test->max_score;
+        } else {
+            $normalizedScore = 0;
+        }
+        
+        // Ensure score is within bounds [0, max_score]
+        return max(0, min($normalizedScore, $this->test->max_score));
     }
 
     public function getCurrentQuestion()

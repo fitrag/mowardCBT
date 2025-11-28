@@ -35,6 +35,6 @@ class Question extends Model
 
     public function options()
     {
-        return $this->hasMany(QuestionOption::class)->orderBy('order');
+        return $this->hasMany(QuestionOption::class);
     }
 }
