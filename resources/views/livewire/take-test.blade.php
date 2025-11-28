@@ -54,18 +54,32 @@
                 @endphp
 
                 @if($currentQuestion)
-                    <div class="bg-white rounded-2xl shadow-sm ring-1 ring-slate-900/5 p-6 mb-6"
+                    <div wire:key="question-{{ $currentQuestion['id'] }}" 
+                         class="bg-white rounded-2xl shadow-sm ring-1 ring-slate-900/5 p-6 mb-6"
                          x-data="{
                              questionId: {{ $currentQuestion['id'] }},
                              timerSeconds: {{ $currentQuestion['timer'] ?? 0 }},
                              startTime: {{ $question_start_times[$currentQuestion['id']] ?? 'null' }},
                              remainingTime: 0,
-                             isLocked: {{ in_array($currentQuestion['id'], $locked_questions) ? 'true' : 'false' }},
+                             lockedQuestions: @js($locked_questions),
+                             timerInterval: null,
+                             
+                             get isLocked() {
+                                 return this.lockedQuestions.includes(this.questionId);
+                             },
                              
                              init() {
-                                 if (this.timerSeconds > 0 && this.startTime) {
+                                 console.log('Timer Init:', {
+                                     questionId: this.questionId,
+                                     timerSeconds: this.timerSeconds,
+                                     startTime: this.startTime,
+                                     isLocked: this.isLocked,
+                                     lockedQuestions: this.lockedQuestions
+                                 });
+                                 
+                                 if (this.timerSeconds > 0 && this.startTime && !this.isLocked) {
                                      this.updateTimer();
-                                     setInterval(() => this.updateTimer(), 1000);
+                                     this.timerInterval = setInterval(() => this.updateTimer(), 1000);
                                  }
                              },
                              
@@ -74,10 +88,21 @@
                                  const elapsed = now - this.startTime;
                                  this.remainingTime = Math.max(0, this.timerSeconds - elapsed);
                                  
+                                 console.log('Timer Update:', {
+                                     questionId: this.questionId,
+                                     now: now,
+                                     elapsed: elapsed,
+                                     remaining: this.remainingTime
+                                 });
+                                 
                                  if (this.remainingTime === 0 && !this.isLocked) {
-                                     this.isLocked = true;
+                                     this.lockedQuestions.push(this.questionId);
                                      $wire.locked_questions.push(this.questionId);
+                                     $wire.call('saveTimerState');
                                      $wire.dispatch('toast', {type: 'warning', message: 'Time is up for this question!'});
+                                     if (this.timerInterval) {
+                                         clearInterval(this.timerInterval);
+                                     }
                                  }
                              },
                              
@@ -112,21 +137,52 @@
                                 </span>
                             </div>
                             
-                            <!-- Per-Question Timer -->
+                            <!-- Per-Question Timer Progress Bar -->
                             @if($currentQuestion['timer'] ?? false)
-                                <div x-show="timerSeconds > 0" 
-                                     class="flex items-center gap-2 px-3 py-1.5 rounded-lg font-mono text-sm font-semibold"
-                                     :class="getTimerColor()">
-                                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                    </svg>
-                                    <span x-show="!isLocked" x-text="formatTime(remainingTime)"></span>
-                                    <span x-show="isLocked" class="flex items-center gap-1">
-                                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
-                                        </svg>
-                                        Locked
-                                    </span>
+                                <div x-show="timerSeconds > 0" class="w-full max-w-xs">
+                                    <!-- Timer Header -->
+                                    <div class="flex items-center justify-between mb-2">
+                                        <div class="flex items-center gap-2 text-sm font-medium" :class="isLocked ? 'text-gray-600' : (remainingTime <= 5 ? 'text-red-600' : (remainingTime <= 10 ? 'text-orange-600' : 'text-green-600'))">
+                                            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                            </svg>
+                                            <span x-show="!isLocked" x-text="formatTime(remainingTime)"></span>
+                                            <span x-show="isLocked" class="flex items-center gap-1">
+                                                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+                                                </svg>
+                                                Locked
+                                            </span>
+                                        </div>
+                                        <span x-show="!isLocked" class="text-xs font-medium" :class="remainingTime <= 5 ? 'text-red-600 animate-pulse' : (remainingTime <= 10 ? 'text-orange-600' : 'text-gray-500')">
+                                            <span x-text="Math.round((remainingTime / timerSeconds) * 100)"></span>%
+                                        </span>
+                                    </div>
+                                    
+                                    <!-- Progress Bar Container -->
+                                    <div class="relative h-3 bg-gray-200 rounded-full overflow-hidden shadow-inner">
+                                        <!-- Progress Bar Fill -->
+                                        <div 
+                                            class="h-full transition-all duration-1000 ease-linear rounded-full"
+                                            :class="isLocked ? 'bg-gray-400' : (remainingTime <= 5 ? 'bg-red-500 animate-pulse' : (remainingTime <= 10 ? 'bg-orange-500' : 'bg-green-500'))"
+                                            :style="`width: ${Math.max(0, Math.min(100, (remainingTime / timerSeconds) * 100))}%`"
+                                        >
+                                            <!-- Shine effect -->
+                                            <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white to-transparent opacity-30 animate-shimmer"></div>
+                                        </div>
+                                        
+                                        <!-- Pulse effect when time is running out -->
+                                        <div 
+                                            x-show="remainingTime <= 5 && remainingTime > 0 && !isLocked"
+                                            class="absolute inset-0 bg-red-500 opacity-20 animate-ping"
+                                        ></div>
+                                    </div>
+                                    
+                                    <!-- Warning Text -->
+                                    <div x-show="remainingTime <= 10 && remainingTime > 0 && !isLocked" class="mt-1 text-xs font-semibold text-center" :class="remainingTime <= 5 ? 'text-red-600 animate-pulse' : 'text-orange-600'">
+                                        <span x-show="remainingTime <= 5">⚠️ TIME'S ALMOST UP!</span>
+                                        <span x-show="remainingTime > 5 && remainingTime <= 10">⏰ Hurry up!</span>
+                                    </div>
                                 </div>
                             @endif
                         </div>

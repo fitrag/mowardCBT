@@ -18,6 +18,9 @@ class TestAttempt extends Model
         'answers',
         'questions',
         'status',
+        'duration_minutes',
+        'question_start_times',
+        'locked_questions',
     ];
 
     protected $casts = [
@@ -26,6 +29,8 @@ class TestAttempt extends Model
         'score' => 'decimal:2',
         'answers' => 'array',
         'questions' => 'array',
+        'question_start_times' => 'array',
+        'locked_questions' => 'array',
     ];
 
     public function user()

@@ -68,6 +68,19 @@ class TakeTest extends Component
         // Load existing answers
         $this->answers = $this->attempt->answers ?? [];
 
+        // Load question start times and locked questions from attempt
+        $this->question_start_times = $this->attempt->question_start_times ?? [];
+        $this->locked_questions = $this->attempt->locked_questions ?? [];
+
+        // Initialize start time for first question if not already set
+        if (!empty($this->questions)) {
+            $firstQuestionId = $this->questions[0]['id'] ?? null;
+            if ($firstQuestionId && !isset($this->question_start_times[$firstQuestionId])) {
+                $this->question_start_times[$firstQuestionId] = now()->timestamp;
+                $this->saveTimerState();
+            }
+        }
+
         // Calculate time remaining
         $this->calculateTimeRemaining();
     }
@@ -218,6 +231,15 @@ class TakeTest extends Component
         ]);
     }
 
+    public function saveTimerState()
+    {
+        // Save timer state to database
+        $this->attempt->update([
+            'question_start_times' => $this->question_start_times,
+            'locked_questions' => $this->locked_questions,
+        ]);
+    }
+
     public function goToQuestion($index)
     {
         $this->currentQuestionIndex = $index;
@@ -226,6 +248,7 @@ class TakeTest extends Component
         $questionId = $this->questions[$index]['id'] ?? null;
         if ($questionId && !isset($this->question_start_times[$questionId])) {
             $this->question_start_times[$questionId] = now()->timestamp;
+            $this->saveTimerState();
         }
     }
 
@@ -233,6 +256,13 @@ class TakeTest extends Component
     {
         if ($this->currentQuestionIndex < count($this->questions) - 1) {
             $this->currentQuestionIndex++;
+            
+            // Track when this question was first viewed
+            $questionId = $this->questions[$this->currentQuestionIndex]['id'] ?? null;
+            if ($questionId && !isset($this->question_start_times[$questionId])) {
+                $this->question_start_times[$questionId] = now()->timestamp;
+                $this->saveTimerState();
+            }
         }
     }
 
@@ -240,6 +270,13 @@ class TakeTest extends Component
     {
         if ($this->currentQuestionIndex > 0) {
             $this->currentQuestionIndex--;
+            
+            // Track when this question was first viewed
+            $questionId = $this->questions[$this->currentQuestionIndex]['id'] ?? null;
+            if ($questionId && !isset($this->question_start_times[$questionId])) {
+                $this->question_start_times[$questionId] = now()->timestamp;
+                $this->saveTimerState();
+            }
         }
     }
 
