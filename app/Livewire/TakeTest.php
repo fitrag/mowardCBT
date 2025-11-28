@@ -19,10 +19,27 @@ class TakeTest extends Component
     public $timeRemaining;
     public $question_start_times = []; // Track when each question was first viewed
     public $locked_questions = []; // Track which questions are locked due to timer expiry
+    
+    // Cache for subject configurations to avoid repeated access
+    protected $subjectConfigsCache = null;
+    
+    // Pending database updates to batch at end of request
+    protected $pendingUpdates = [];
 
     public function mount(Test $test)
     {
-        $this->test = $test;
+        // Eager load test with all necessary relationships to prevent N+1 queries
+        $this->test = $test->load(['subjects' => function ($query) {
+            $query->withPivot([
+                'question_count',
+                'question_type',
+                'difficulty_level',
+                'options_count',
+                'randomize_questions',
+                'randomize_answers'
+            ]);
+        }]);
+        
         $user = auth()->user();
 
         // Get or validate attempt
@@ -84,13 +101,27 @@ class TakeTest extends Component
         // Calculate time remaining
         $this->calculateTimeRemaining();
     }
+    
+    /**
+     * Get cached subject configurations
+     */
+    protected function getSubjectConfigs()
+    {
+        if ($this->subjectConfigsCache === null) {
+            $this->subjectConfigsCache = $this->test->subjects->keyBy('id');
+        }
+        return $this->subjectConfigsCache;
+    }
 
     public function processQuestionOptions()
     {
+        // Use cached subject configurations to avoid N+1 queries
+        $subjectConfigs = $this->getSubjectConfigs();
+        
         // Re-apply options_count and randomization to loaded questions
         foreach ($this->questions as $index => $question) {
             // Find the subject configuration for this question
-            $subject = $this->test->subjects->firstWhere('id', $question['subject_id']);
+            $subject = $subjectConfigs->get($question['subject_id']);
             
             if (!$subject || $question['question_type'] != 1) {
                 continue;
@@ -122,25 +153,34 @@ class TakeTest extends Component
     public function loadQuestions()
     {
         $questions = collect();
-
-        foreach ($this->test->subjects as $subject) {
-            $query = Question::with('options') // Load options relationship
-                ->where('subject_id', $subject->id)
-                ->where('status', 1);
-
+        
+        // Pre-load all subject IDs and their configurations
+        $subjectConfigs = $this->getSubjectConfigs();
+        $subjectIds = $subjectConfigs->keys()->toArray();
+        
+        // Single optimized query to get all questions at once
+        $allQuestions = Question::with('options')
+            ->whereIn('subject_id', $subjectIds)
+            ->where('status', 1)
+            ->get()
+            ->groupBy('subject_id');
+        
+        // Process questions per subject
+        foreach ($subjectConfigs as $subjectId => $subject) {
+            $subjectQuestions = $allQuestions->get($subjectId, collect());
+            
             // Apply filters from pivot
             if ($subject->pivot->question_type) {
-                $query->where('question_type', $subject->pivot->question_type);
+                $subjectQuestions = $subjectQuestions->where('question_type', $subject->pivot->question_type)->values();
             }
-
+            
             if ($subject->pivot->difficulty_level) {
-                $query->where('difficulty_level', $subject->pivot->difficulty_level);
+                $subjectQuestions = $subjectQuestions->where('difficulty_level', $subject->pivot->difficulty_level)->values();
             }
-
-            // Get questions
-            $subjectQuestions = $query->inRandomOrder()
-                ->limit($subject->pivot->question_count)
-                ->get();
+            
+            // Randomize and limit to question_count
+            $subjectQuestions = $subjectQuestions->shuffle()
+                ->take($subject->pivot->question_count);
 
             // Randomize questions if enabled
             if ($subject->pivot->randomize_questions) {
@@ -225,19 +265,27 @@ class TakeTest extends Component
 
         $this->answers[$questionId] = $answer;
         
-        // Save to database
-        $this->attempt->update([
-            'answers' => $this->answers,
-        ]);
+        // Defer database update to dehydrate hook
+        $this->pendingUpdates['answers'] = $this->answers;
     }
 
     public function saveTimerState()
     {
-        // Save timer state to database
-        $this->attempt->update([
-            'question_start_times' => $this->question_start_times,
-            'locked_questions' => $this->locked_questions,
-        ]);
+        // Defer database update to dehydrate hook
+        $this->pendingUpdates['question_start_times'] = $this->question_start_times;
+        $this->pendingUpdates['locked_questions'] = $this->locked_questions;
+    }
+    
+    /**
+     * Batch all pending updates when component dehydrates
+     */
+    public function dehydrate()
+    {
+        // Save all pending updates at once to reduce database calls
+        if (!empty($this->pendingUpdates)) {
+            $this->attempt->update($this->pendingUpdates);
+            $this->pendingUpdates = [];
+        }
     }
 
     public function goToQuestion($index)
