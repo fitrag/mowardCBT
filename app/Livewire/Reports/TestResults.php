@@ -75,10 +75,9 @@ class TestResults extends Component
 
     public function render()
     {
-        // Build query
-        $query = TestAttempt::with(['user', 'test.subject', 'user.groups'])
-            ->where('status', 'submitted')
-            ->whereNotNull('score');
+        // Build query - show all tests (completed, in progress, paused, cheating detected)
+        $query = TestAttempt::with(['user.group', 'test.subjects'])
+            ->whereIn('status', ['graded', 'in_progress', 'paused', 'cheating_detected']);
 
         // Apply filters
         if ($this->search) {
@@ -90,7 +89,9 @@ class TestResults extends Component
 
         if ($this->filterSubject) {
             $query->whereHas('test', function ($q) {
-                $q->where('subject_id', $this->filterSubject);
+                $q->whereHas('subjects', function ($subQ) {
+                    $subQ->where('subjects.id', $this->filterSubject);
+                });
             });
         }
 
@@ -99,8 +100,8 @@ class TestResults extends Component
         }
 
         if ($this->filterGroup) {
-            $query->whereHas('user.groups', function ($q) {
-                $q->where('groups.id', $this->filterGroup);
+            $query->whereHas('user', function ($q) {
+                $q->where('group_id', $this->filterGroup);
             });
         }
 
@@ -121,7 +122,9 @@ class TestResults extends Component
         // Get filter options
         $subjects = Subject::orderBy('name')->get();
         $tests = $this->filterSubject 
-            ? Test::where('subject_id', $this->filterSubject)->orderBy('name')->get()
+            ? Test::whereHas('subjects', function($q) {
+                $q->where('subjects.id', $this->filterSubject);
+              })->orderBy('name')->get()
             : Test::orderBy('name')->get();
         $groups = Group::orderBy('name')->get();
 
@@ -173,5 +176,112 @@ class TestResults extends Component
             'lowestScore' => round($attempts->min('score'), 1),
             'passRate' => round($passRate, 1),
         ];
+    }
+
+    public function export()
+    {
+        return \Maatwebsite\Excel\Facades\Excel::download(
+            new \App\Exports\TestResultsExport(),
+            'test-results-' . now()->format('Y-m-d') . '.xlsx'
+        );
+    }
+
+    public function pauseTest($attemptId)
+    {
+        $attempt = TestAttempt::findOrFail($attemptId);
+        
+        // Only pause if in progress
+        if ($attempt->status === 'in_progress') {
+            // Use existing remaining_seconds (from last auto-save)
+            // Only calculate if remaining_seconds is null (test just started, no auto-save yet)
+            if ($attempt->remaining_seconds === null) {
+                $test = $attempt->test;
+                $totalAllowedSeconds = $test->duration * 60;
+                $elapsedSeconds = now()->diffInSeconds($attempt->started_at);
+                $remainingSeconds = max(0, $totalAllowedSeconds - $elapsedSeconds);
+                
+                $attempt->update([
+                    'status' => 'paused',
+                    'remaining_seconds' => $remainingSeconds,
+                    'paused_at' => now(),
+                ]);
+            } else {
+                // Just update status, keep existing remaining_seconds
+                $attempt->update([
+                    'status' => 'paused',
+                    'paused_at' => now(),
+                ]);
+            }
+            
+            $this->dispatch('toast', [
+                'type' => 'success', 
+                'message' => 'Test paused successfully. Student cannot continue until resumed.'
+            ]);
+            
+            // Clear cache to ensure status update is immediate
+            cache()->forget("test_attempt_status_{$attemptId}");
+        } else {
+            $this->dispatch('toast', [
+                'type' => 'error', 
+                'message' => 'Can only pause tests that are in progress.'
+            ]);
+        }
+    }
+
+    public function resumeTest($attemptId)
+    {
+        $attempt = TestAttempt::findOrFail($attemptId);
+        
+        // Only resume if paused
+        if ($attempt->status === 'paused') {
+            // Just change status back to in_progress
+            // remaining_seconds already saved during pause
+            $attempt->update([
+                'status' => 'in_progress',
+                'paused_at' => null,
+            ]);
+            
+            $this->dispatch('toast', [
+                'type' => 'success', 
+                'message' => 'Test resumed successfully. Student can continue now.'
+            ]);
+            
+            // Clear cache to ensure status update is immediate
+            cache()->forget("test_attempt_status_{$attemptId}");
+        } else {
+            $this->dispatch('toast', [
+                'type' => 'error', 
+                'message' => 'Can only resume tests that are paused.'
+            ]);
+        }
+    }
+    
+    public function addExtraTime($attemptId, $extraMinutes)
+    {
+        $attempt = TestAttempt::findOrFail($attemptId);
+        
+        // Only add time if test is in progress
+        if ($attempt->status === 'in_progress') {
+            // Convert minutes to seconds and add to remaining_seconds
+            $extraSeconds = $extraMinutes * 60;
+            $newRemaining = $attempt->remaining_seconds + $extraSeconds;
+            
+            $attempt->update([
+                'remaining_seconds' => $newRemaining,
+            ]);
+            
+            $this->dispatch('toast', [
+                'type' => 'success', 
+                'message' => "Added {$extraMinutes} minutes to student's test time."
+            ]);
+            
+            // Clear cache to ensure time update is immediate
+            cache()->forget("test_attempt_status_{$attemptId}");
+        } else {
+            $this->dispatch('toast', [
+                'type' => 'error', 
+                'message' => 'Can only add time to tests that are in progress.'
+            ]);
+        }
     }
 }

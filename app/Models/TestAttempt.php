@@ -22,6 +22,8 @@ class TestAttempt extends Model
         'status',
         'duration_minutes',
         'duration_seconds',
+        'remaining_seconds',
+        'paused_at',
         'question_start_times',
         'locked_questions',
     ];
@@ -29,6 +31,7 @@ class TestAttempt extends Model
     protected $casts = [
         'started_at' => 'datetime',
         'submitted_at' => 'datetime',
+        'paused_at' => 'datetime',
         'score' => 'decimal:2',
         'answers' => 'array',
         'questions' => 'array',
@@ -53,12 +56,17 @@ class TestAttempt extends Model
 
     public function isSubmitted()
     {
-        return $this->status === 'submitted';
+        return in_array($this->status, ['submitted', 'graded', 'cheating_detected']);
     }
 
     public function isGraded()
     {
         return $this->status === 'graded';
+    }
+
+    public function isCheating()
+    {
+        return $this->status === 'cheating_detected';
     }
 
     public function getTimeElapsed()

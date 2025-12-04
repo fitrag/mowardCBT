@@ -32,7 +32,7 @@ class StudentDashboard extends Component
         // Helper to check if test is completed
         $isCompleted = function ($test) use ($user) {
             return $test->attempts->where('user_id', $user->id)
-                ->whereIn('status', ['submitted', 'graded'])
+                ->whereIn('status', ['submitted', 'graded', 'cheating_detected'])
                 ->isNotEmpty();
         };
 

@@ -4,6 +4,7 @@ namespace App\Livewire\Students;
 
 use App\Models\User;
 use App\Models\Group;
+use App\Models\Setting;
 use App\Enums\UserRole;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Rule;
@@ -22,10 +23,10 @@ class Index extends Component
 {
     use WithPagination, WithFileUploads;
 
-    #[Url(history: true)]
+        #[Url(history: true)]
     public $search = '';
 
-    public $perPage = 10;
+    public $perPage;
     public $importFile;
     public $selected = [];
     public $filterGroup = '';
@@ -37,8 +38,13 @@ class Index extends Component
     public $description = '';
     public $group_id = '';
 
-    public $userId;
+        public $userId;
     public $isEdit = false;
+
+    public function mount()
+    {
+        $this->perPage = Setting::get('items_per_page', 10);
+    }
 
     public function rules()
     {

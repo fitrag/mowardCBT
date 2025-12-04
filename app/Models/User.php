@@ -60,4 +60,9 @@ class User extends Authenticatable
     {
         return $this->hasMany(TestAttempt::class);
     }
+
+    public function attempts()
+    {
+        return $this->hasMany(TestAttempt::class);
+    }
 }

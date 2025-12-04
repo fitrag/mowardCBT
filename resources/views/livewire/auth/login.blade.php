@@ -13,14 +13,22 @@
         <!-- Content -->
         <div class="relative z-10 flex flex-col justify-center max-w-lg mx-auto">
             <!-- Logo -->
+            @php
+                $appLogo = \App\Models\Setting::get('app_logo');
+                $appName = \App\Models\Setting::get('app_name', 'MowardCBT');
+            @endphp
             <div class="flex items-center gap-3 mb-12 group">
-                <div class="w-14 h-14 bg-white/10 backdrop-blur-sm rounded-2xl flex items-center justify-center border border-white/20 transition-all duration-300 group-hover:bg-white/20 group-hover:scale-105">
-                    <svg class="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M4.26 10.147a60.436 60.436 0 00-.491 6.347A48.627 48.627 0 0112 20.904a48.627 48.627 0 018.232-4.41 60.46 60.46 0 00-.491-6.347m-15.482 0a50.57 50.57 0 00-2.658-.813A59.905 59.905 0 0112 3.493a59.902 59.902 0 0110.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.697 50.697 0 0112 13.489a50.702 50.702 0 017.74-3.342M6.75 15a.75.75 0 100-1.5.75.75 0 000 1.5zm0 0v-3.675A55.378 55.378 0 0112 8.443m-7.007 11.55A5.981 5.981 0 006.75 15.75v-1.5" />
-                    </svg>
+                <div class="w-14 h-14 bg-white/10 backdrop-blur-sm rounded-2xl flex items-center justify-center border border-white/20 transition-all duration-300 group-hover:bg-white/20 group-hover:scale-105 overflow-hidden">
+                    @if($appLogo)
+                        <img src="{{ asset('storage/' . $appLogo) }}" alt="Logo" class="w-full h-full object-cover">
+                    @else
+                        <svg class="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M4.26 10.147a60.436 60.436 0 00-.491 6.347A48.627 48.627 0 0112 20.904a48.627 48.627 0 018.232-4.41 60.46 60.46 0 00-.491-6.347m-15.482 0a50.57 50.57 0 00-2.658-.813A59.905 59.905 0 0112 3.493a59.902 59.902 0 0110.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.697 50.697 0 0112 13.489a50.702 50.702 0 017.74-3.342M6.75 15a.75.75 0 100-1.5.75.75 0 000 1.5zm0 0v-3.675A55.378 55.378 0 0112 8.443m-7.007 11.55A5.981 5.981 0 006.75 15.75v-1.5" />
+                        </svg>
+                    @endif
                 </div>
                 <div>
-                    <h1 class="text-3xl font-bold text-white">MowardCBT</h1>
+                    <h1 class="text-3xl font-bold text-white">{{ $appName }}</h1>
                     <p class="text-xs text-indigo-200 mt-1">by MowardStudio</p>
                 </div>
             </div>
@@ -84,14 +92,22 @@
         <div class="w-full max-w-md relative z-10">
             <!-- Mobile Logo -->
             <div class="lg:hidden text-center mb-8">
+                @php
+                    $appLogo = \App\Models\Setting::get('app_logo');
+                    $appName = \App\Models\Setting::get('app_name', 'MowardCBT');
+                @endphp
                 <div class="inline-flex items-center gap-2 mb-4">
-                    <div class="w-12 h-12 bg-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-600/30">
-                        <svg class="w-7 h-7 text-white" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M4.26 10.147a60.436 60.436 0 00-.491 6.347A48.627 48.627 0 0112 20.904a48.627 48.627 0 018.232-4.41 60.46 60.46 0 00-.491-6.347m-15.482 0a50.57 50.57 0 00-2.658-.813A59.905 59.905 0 0112 3.493a59.902 59.902 0 0110.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.697 50.697 0 0112 13.489a50.702 50.702 0 017.74-3.342M6.75 15a.75.75 0 100-1.5.75.75 0 000 1.5zm0 0v-3.675A55.378 55.378 0 0112 8.443m-7.007 11.55A5.981 5.981 0 006.75 15.75v-1.5" />
-                        </svg>
+                    <div class="w-12 h-12 bg-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-600/30 overflow-hidden">
+                        @if($appLogo)
+                            <img src="{{ asset('storage/' . $appLogo) }}" alt="Logo" class="w-full h-full object-cover">
+                        @else
+                            <svg class="w-7 h-7 text-white" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M4.26 10.147a60.436 60.436 0 00-.491 6.347A48.627 48.627 0 0112 20.904a48.627 48.627 0 018.232-4.41 60.46 60.46 0 00-.491-6.347m-15.482 0a50.57 50.57 0 00-2.658-.813A59.905 59.905 0 0112 3.493a59.902 59.902 0 0110.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.697 50.697 0 0112 13.489a50.702 50.702 0 017.74-3.342M6.75 15a.75.75 0 100-1.5.75.75 0 000 1.5zm0 0v-3.675A55.378 55.378 0 0112 8.443m-7.007 11.55A5.981 5.981 0 006.75 15.75v-1.5" />
+                            </svg>
+                        @endif
                     </div>
                     <div>
-                        <h1 class="text-2xl font-bold text-slate-900">MowardCBT</h1>
+                        <h1 class="text-2xl font-bold text-slate-900">{{ $appName }}</h1>
                         <p class="text-[10px] text-slate-500 mt-0.5">by MowardStudio</p>
                     </div>
                 </div>
@@ -105,20 +121,20 @@
                 </div>
 
                 <form wire:submit="login" class="space-y-5">
-                    <!-- Email -->
+                    <!-- Email/Username -->
                     <div>
-                        <x-input-label for="email" value="Email Address" />
+                        <x-input-label for="identifier" :value="$loginMethod === 'email' ? 'Email Address' : 'Username'" />
                         <div class="mt-1.5">
                             <x-text-input 
-                                wire:model="email" 
-                                id="email" 
-                                type="email" 
-                                autocomplete="email" 
+                                wire:model="identifier" 
+                                id="identifier" 
+                                :type="$loginMethod === 'email' ? 'email' : 'text'" 
+                                :autocomplete="$loginMethod === 'email' ? 'email' : 'username'" 
                                 required 
-                                placeholder="you@example.com"
+                                :placeholder="$loginMethod === 'email' ? 'you@example.com' : 'your_username'"
                                 class="w-full"
                             />
-                            <x-input-error :messages="$errors->get('email')" class="mt-2" />
+                            <x-input-error :messages="$errors->get('identifier')" class="mt-2" />
                         </div>
                     </div>
 

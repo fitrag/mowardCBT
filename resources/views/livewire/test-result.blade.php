@@ -25,42 +25,104 @@
             <p class="text-xs sm:text-sm text-slate-500">Please contact your instructor for more information.</p>
         </div>
     @else
-        <!-- Score Card -->
-        <div class="bg-gradient-to-br from-indigo-500 to-violet-600 rounded-2xl shadow-xl p-4 sm:p-8 mb-6 sm:mb-10 text-white">
-            <div class="flex flex-col md:flex-row items-center justify-between gap-8">
-                <div class="text-center md:text-left w-full md:w-auto">
-                    <h2 class="text-base sm:text-lg font-medium mb-1 opacity-90">Total Score</h2>
-                    <div class="flex items-baseline gap-2 justify-center md:justify-start">
-                        <span class="text-4xl sm:text-5xl font-bold">{{ number_format($attempt->score, 0) }}</span>
-                        <span class="text-xl sm:text-2xl opacity-75">/ {{ $test->max_score }}</span>
+        <!-- Score Card - Clean & Simple -->
+        <div class="bg-gradient-to-br from-indigo-500 to-violet-600 rounded-2xl shadow-lg p-6 sm:p-8 mb-8 text-white">
+            @php
+                // Global setting acts as gate - both global AND per-test must be true to show score
+                $globalSetting = \App\Models\Setting::get('show_score_to_students', true);
+                $showScore = $globalSetting && $test->show_score_to_students;
+            @endphp
+            
+            @if($showScore)
+                <!-- Score Display -->
+                <div class="flex flex-col md:flex-row items-center justify-between gap-6">
+                    <!-- Score Section -->
+                    <div class="flex-1 text-center md:text-left">
+                        <p class="text-sm font-medium text-white/80 mb-2">Your Score</p>
+                        <div class="flex items-baseline gap-3 justify-center md:justify-start mb-1">
+                            <span class="text-5xl sm:text-6xl font-bold">{{ number_format($attempt->score, 0) }}</span>
+                            <span class="text-2xl sm:text-3xl text-white/70">/ {{ $test->max_score }}</span>
+                        </div>
+                        <p class="text-lg text-white/80">{{ $this->getScorePercentage() }}%</p>
                     </div>
-                </div>
-                
-                <div class="text-center">
-                    <div class="inline-flex items-center justify-center h-16 w-16 sm:h-20 sm:w-20 rounded-full bg-white/20 backdrop-blur-sm mb-2">
-                        <span class="text-xl sm:text-2xl font-bold">{{ $this->getScorePercentage() }}%</span>
-                    </div>
-                    <p class="text-xs sm:text-sm font-medium opacity-90">Percentage</p>
-                </div>
 
-                @if($test->show_result_details && count($questions) > 0)
-                    <div class="flex flex-wrap justify-center gap-4 sm:gap-6 text-center w-full md:w-auto">
-                        <div class="min-w-[80px]">
-                            <div class="text-xl sm:text-2xl font-bold">{{ $this->getCorrectCount() }}</div>
-                            <div class="text-[10px] sm:text-xs uppercase tracking-wider opacity-75 mt-1">Correct</div>
-                        </div>
-                        <div class="min-w-[80px]">
-                            <div class="text-xl sm:text-2xl font-bold">{{ $this->getWrongCount() }}</div>
-                            <div class="text-[10px] sm:text-xs uppercase tracking-wider opacity-75 mt-1">Wrong</div>
-                        </div>
-                        <div class="min-w-[80px]">
-                            <div class="text-xl sm:text-2xl font-bold">{{ $this->getUnansweredCount() }}</div>
-                            <div class="text-[10px] sm:text-xs uppercase tracking-wider opacity-75 mt-1">Unanswered</div>
-                        </div>
+                    <!-- Pass/Fail Badge -->
+                    <div class="flex-shrink-0">
+                        @if($this->isPassed())
+                            <div class="inline-flex items-center gap-3 px-8 py-4 bg-white/20 backdrop-blur-sm rounded-xl border border-white/30">
+                                <svg class="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                <span class="text-2xl font-bold">PASSED</span>
+                            </div>
+                        @else
+                            <div class="inline-flex items-center gap-3 px-8 py-4 bg-white/20 backdrop-blur-sm rounded-xl border border-white/30">
+                                <svg class="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                                <span class="text-2xl font-bold">NOT PASSED</span>
+                            </div>
+                        @endif
                     </div>
-                @endif
-            </div>
+                </div>
+            @else
+                <!-- Score Hidden State -->
+                <div class="text-center py-6">
+                    <!-- Icon -->
+                    <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-white/20 mb-4">
+                        <svg class="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    </div>
+                    
+                    <h3 class="text-2xl sm:text-3xl font-bold mb-2">Test Completed</h3>
+                    <p class="text-lg text-white/90 mb-6">You have successfully submitted your answers</p>
+                    
+                    <!-- Pass/Fail Status -->
+                    @if($this->isPassed())
+                        <div class="inline-flex items-center gap-3 px-8 py-4 bg-white/20 backdrop-blur-sm rounded-xl border border-white/30 mb-4">
+                            <svg class="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <span class="text-2xl font-bold">PASSED</span>
+                        </div>
+                    @else
+                        <div class="inline-flex items-center gap-3 px-8 py-4 bg-white/20 backdrop-blur-sm rounded-xl border border-white/30 mb-4">
+                            <svg class="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                            <span class="text-2xl font-bold">NOT PASSED</span>
+                        </div>
+                    @endif
+                    
+                    <!-- Info Message -->
+                    <p class="text-sm text-white/80">
+                        <svg class="inline w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />
+                        </svg>
+                        Score details are hidden by the administrator
+                    </p>
+                </div>
+            @endif
         </div>
+
+        @if($test->show_result_details && count($questions) > 0)
+            <!-- Summary Stats -->
+            <div class="grid grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
+                <div class="bg-white rounded-xl shadow-sm ring-1 ring-slate-900/5 p-4 sm:p-6 text-center">
+                    <div class="text-2xl sm:text-3xl font-bold text-emerald-600">{{ $this->getCorrectCount() }}</div>
+                    <div class="text-xs sm:text-sm text-slate-500 mt-1">Correct</div>
+                </div>
+                <div class="bg-white rounded-xl shadow-sm ring-1 ring-slate-900/5 p-4 sm:p-6 text-center">
+                    <div class="text-2xl sm:text-3xl font-bold text-red-600">{{ $this->getWrongCount() }}</div>
+                    <div class="text-xs sm:text-sm text-slate-500 mt-1">Wrong</div>
+                </div>
+                <div class="bg-white rounded-xl shadow-sm ring-1 ring-slate-900/5 p-4 sm:p-6 text-center">
+                    <div class="text-2xl sm:text-3xl font-bold text-slate-600">{{ $this->getUnansweredCount() }}</div>
+                    <div class="text-xs sm:text-sm text-slate-500 mt-1">Unanswered</div>
+                </div>
+            </div>
+        @endif
 
         @if($test->show_result_details && count($questions) > 0)
             <!-- Detailed Results -->
@@ -173,9 +235,9 @@
                                 @endforeach
                             </div>
                         </div>
-                    @endforeach
-                </div>
+                @endforeach
             </div>
-        @endif
+        </div>
+    @endif
     @endif
 </div>

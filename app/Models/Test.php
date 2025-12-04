@@ -14,6 +14,7 @@ class Test extends Model
         'duration',
         'show_results',
         'show_result_details',
+        'show_score_to_students',
         'enable_safe_browser',
         'correct_score',
         'wrong_score',
@@ -29,6 +30,7 @@ class Test extends Model
         'end_date' => 'datetime',
         'show_results' => 'boolean',
         'show_result_details' => 'boolean',
+        'show_score_to_students' => 'boolean',
         'enable_safe_browser' => 'boolean',
         'use_token' => 'boolean',
         'token_expires_at' => 'datetime',
@@ -93,6 +95,11 @@ class Test extends Model
     public function isExpired()
     {
         return $this->end_date < now();
+    }
+
+    public function getSubjectAttribute()
+    {
+        return $this->subjects->first();
     }
 
     public function getStatusAttribute()

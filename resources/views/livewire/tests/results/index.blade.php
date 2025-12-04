@@ -94,6 +94,8 @@
                     <option value="in_progress">In Progress</option>
                     <option value="submitted">Submitted</option>
                     <option value="graded">Graded</option>
+                    <option value="paused">Paused</option>
+                    <option value="cheating_detected">Cheating Detected</option>
                 </x-select>
             </div>
             
@@ -169,6 +171,20 @@
                                     <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">Submitted</span>
                                 @elseif($attempt->status === 'graded')
                                     <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-800">Graded</span>
+                                @elseif($attempt->status === 'paused')
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">
+                                        <svg class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 5.25v13.5m-7.5-13.5v13.5" />
+                                        </svg>
+                                        Paused
+                                    </span>
+                                @elseif($attempt->status === 'cheating_detected')
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">
+                                        <svg class="h-3 w-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495zM10 5a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 5zm0 9a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" />
+                                        </svg>
+                                        Cheating Detected
+                                    </span>
                                 @endif
                             </div>
                             
@@ -209,12 +225,31 @@
                             </div>
                             
                             <!-- Actions -->
-                            <div class="col-span-1 text-right">
+                            <div class="col-span-1 text-right space-y-1">
+                                @if($attempt->status === 'in_progress')
+                                    <button 
+                                        wire:click="pauseTest({{ $attempt->id }})"
+                                        wire:loading.class="opacity-50" 
+                                        wire:target="pauseTest({{ $attempt->id }})"
+                                        class="text-xs text-amber-600 hover:text-amber-900 transition-colors underline block"
+                                    >
+                                        Pause
+                                    </button>
+                                @elseif($attempt->status === 'paused')
+                                    <button 
+                                        wire:click="resumeTest({{ $attempt->id }})"
+                                        wire:loading.class="opacity-50" 
+                                        wire:target="resumeTest({{ $attempt->id }})"
+                                        class="text-xs text-green-600 hover:text-green-900 transition-colors underline block"
+                                    >
+                                        Resume
+                                    </button>
+                                @endif
                                 <button 
                                     @click="confirmAction('Delete Attempt?', 'This will delete {{ $attempt->user->name }}\\'s attempt. They will be able to retake the test.', 'Yes, delete it!', () => $wire.deleteAttempt({{ $attempt->id }}))"
                                     wire:loading.class="opacity-50" 
                                     wire:target="deleteAttempt({{ $attempt->id }})"
-                                    class="text-xs text-red-600 hover:text-red-900 transition-colors underline"
+                                    class="text-xs text-red-600 hover:text-red-900 transition-colors underline block"
                                 >
                                     Delete
                                 </button>
@@ -282,6 +317,20 @@
                             <span class="inline-flex items-center rounded-md bg-purple-50 px-2 py-1 text-xs font-medium text-purple-700 ring-1 ring-inset ring-purple-700/10">
                                 Graded
                             </span>
+                        @elseif($attempt->status === 'paused')
+                            <span class="inline-flex items-center rounded-md bg-red-50 px-2 py-1 text-xs font-medium text-red-700 ring-1 ring-inset ring-red-600/20">
+                                <svg class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 5.25v13.5m-7.5-13.5v13.5" />
+                                </svg>
+                                Paused
+                            </span>
+                        @elseif($attempt->status === 'cheating_detected')
+                            <span class="inline-flex items-center rounded-md bg-red-50 px-2 py-1 text-xs font-medium text-red-700 ring-1 ring-inset ring-red-700/10">
+                                <svg class="h-3 w-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495zM10 5a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 5zm0 9a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" />
+                                </svg>
+                                Cheating Detected
+                            </span>
                         @endif
                     </x-table-td>
                     <x-table-td>
@@ -347,14 +396,50 @@
                         @endif
                     </x-table-td>
                     <x-table-td class="text-right">
-                        <x-table-button 
-                            @click="confirmAction('Delete Attempt?', 'This will delete {{ $attempt->user->name }}\\'s attempt. They will be able to retake the test.', 'Yes, delete it!', () => $wire.deleteAttempt({{ $attempt->id }}))"
-                            wire:loading.class="opacity-50" 
-                            wire:target="deleteAttempt({{ $attempt->id }})"
-                            color="red"
-                        >
-                            Delete
-                        </x-table-button>
+                        <div class="flex items-center justify-end gap-2">
+                            @if($attempt->status === 'in_progress')
+                                <x-table-button 
+                                    wire:click="pauseTest({{ $attempt->id }})" 
+                                    wire:loading.class="opacity-50" 
+                                    wire:target="pauseTest({{ $attempt->id }})"
+                                    color="amber"
+                                >
+                                    <svg class="-ml-0.5 mr-1.5 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 5.25v13.5m-7.5-13.5v13.5" />
+                                    </svg>
+                                    Pause
+                                </x-table-button>
+                                <x-table-button 
+                                    @click="$dispatch('open-add-time-modal', { attemptId: {{ $attempt->id }} })"
+                                    color="blue"
+                                >
+                                    <svg class="-ml-0.5 mr-1.5 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                    Add Time
+                                </x-table-button>
+                            @elseif($attempt->status === 'paused')
+                                <x-table-button 
+                                    wire:click="resumeTest({{ $attempt->id }})" 
+                                    wire:loading.class="opacity-50" 
+                                    wire:target="resumeTest({{ $attempt->id }})"
+                                    color="green"
+                                >
+                                    <svg class="-ml-0.5 mr-1.5 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.348a1.125 1.125 0 010 1.971l-11.54 6.347a1.125 1.125 0 01-1.667-.985V5.653z" />
+                                    </svg>
+                                    Resume
+                                </x-table-button>
+                            @endif
+                            <x-table-button 
+                                @click="confirmAction('Delete Attempt?', 'This will delete {{ $attempt->user->name }}\\'s attempt. They will be able to retake the test.', 'Yes, delete it!', () => $wire.deleteAttempt({{ $attempt->id }}))"
+                                wire:loading.class="opacity-50" 
+                                wire:target="deleteAttempt({{ $attempt->id }})"
+                                color="red"
+                            >
+                                Delete
+                            </x-table-button>
+                        </div>
                     </x-table-td>
                 </x-table-row>
             @empty
@@ -542,4 +627,89 @@
             </div>
         </div>
     @endif
+    
+    <!-- Add Time Modal -->
+    <div x-data="{ 
+        showAddTimeModal: false,
+        selectedAttemptId: null,
+        extraMinutes: 5,
+        init() {
+            window.addEventListener('open-add-time-modal', (e) => {
+                this.selectedAttemptId = e.detail.attemptId;
+                this.showAddTimeModal = true;
+            });
+        }
+    }">
+        <div 
+            x-show="showAddTimeModal" 
+            x-cloak
+            class="fixed inset-0 z-50 overflow-y-auto"
+            @keydown.escape.window="showAddTimeModal = false"
+        >
+            <!-- Background overlay -->
+            <div 
+                x-show="showAddTimeModal"
+                x-transition:enter="ease-out duration-300"
+                x-transition:enter-start="opacity-0"
+                x-transition:enter-end="opacity-100"
+                x-transition:leave="ease-in duration-200"
+                x-transition:leave-start="opacity-100"
+                x-transition:leave-end="opacity-0"
+                class="fixed inset-0 bg-slate-500 bg-opacity-75 transition-opacity"
+                @click="showAddTimeModal = false"
+            ></div>
+
+            <!-- Modal panel -->
+            <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:p-0">
+                <div 
+                    x-show="showAddTimeModal"
+                    x-transition:enter="ease-out duration-300"
+                    x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                    x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
+                    x-transition:leave="ease-in duration-200"
+                    x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
+                    x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                    class="relative inline-block w-full max-w-md p-6 my-8 overflow-hidden text-left align-middle transition-all transform bg-white shadow-xl rounded-2xl z-50"
+                >
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-semibold text-slate-900">Add Extra Time</h3>
+                        <button @click="showAddTimeModal = false" class="text-slate-400 hover:text-slate-600">
+                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-2">Extra Minutes</label>
+                            <input 
+                                type="number" 
+                                x-model="extraMinutes"
+                                min="1"
+                                max="60"
+                                class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                                placeholder="Enter minutes"
+                            >
+                        </div>
+
+                        <div class="flex gap-3 pt-4">
+                            <button 
+                                @click="showAddTimeModal = false"
+                                class="flex-1 px-4 py-2 text-sm font-medium text-slate-700 bg-slate-100 rounded-lg hover:bg-slate-200 transition-colors"
+                            >
+                                Cancel
+                            </button>
+                            <button 
+                                @click="$wire.addExtraTime(selectedAttemptId, extraMinutes); showAddTimeModal = false"
+                                class="flex-1 px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-colors"
+                            >
+                                Add Time
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>

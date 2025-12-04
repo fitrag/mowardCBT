@@ -2,27 +2,44 @@
 
 namespace App\Livewire\Auth;
 
+use App\Models\Setting;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Layout;
-use Livewire\Attributes\Validate;
 use Livewire\Component;
 
 #[Layout('components.layouts.guest')]
 class Login extends Component
 {
-    #[Validate('required|email')]
-    public $email = '';
-
-    #[Validate('required')]
+    public $identifier = '';
     public $password = '';
-
     public $remember = false;
+    public $loginMethod = 'email';
+
+    public function mount()
+    {
+        // Get login method from settings
+        $this->loginMethod = Setting::get('login_method', 'email');
+    }
 
     public function login()
     {
-        $this->validate();
+        // Dynamic validation based on login method
+        $rules = [
+            'identifier' => $this->loginMethod === 'email' 
+                ? 'required|email' 
+                : 'required|string',
+            'password' => 'required',
+        ];
 
-        if (Auth::attempt(['email' => $this->email, 'password' => $this->password], $this->remember)) {
+        $this->validate($rules);
+
+        // Build credentials array based on login method
+        $credentials = [
+            $this->loginMethod => $this->identifier,
+            'password' => $this->password
+        ];
+
+        if (Auth::attempt($credentials, $this->remember)) {
             session()->regenerate();
 
             // Redirect based on user role
@@ -32,7 +49,7 @@ class Login extends Component
             return $this->redirectIntended(default: $defaultRoute, navigate: true);
         }
 
-        $this->addError('email', 'The provided credentials do not match our records.');
+        $this->addError('identifier', 'The provided credentials do not match our records.');
     }
 
     public function render()

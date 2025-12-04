@@ -340,6 +340,13 @@
                 </div>
 
                 <div class="flex items-center gap-3">
+                    <x-checkbox wire:model="show_score_to_students" id="show_score_to_students" />
+                    <label for="show_score_to_students" class="text-sm font-medium text-slate-700">
+                        Show numeric score to students
+                    </label>
+                </div>
+
+                <div class="flex items-center gap-3">
                     <x-checkbox wire:model="enable_safe_browser" id="enable_safe_browser" />
                     <label for="enable_safe_browser" class="text-sm font-medium text-slate-700">
                         Enable Safe Browser (Anti-Cheating)

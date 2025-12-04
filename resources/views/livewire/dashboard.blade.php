@@ -1,31 +1,34 @@
 <div>
     <!-- Header Section -->
-    <div class="mb-8 flex items-center justify-between">
-        <div>
-            <h2 class="text-3xl font-bold tracking-tight text-slate-900">Dashboard</h2>
-            <p class="mt-2 text-sm text-slate-500">Welcome back, here's what's happening today.</p>
-        </div>
-        <div class="flex items-center gap-x-3">
-            <span class="inline-flex items-center rounded-lg bg-white px-3 py-1 text-sm font-medium text-slate-600 shadow-sm ring-1 ring-slate-900/5">
-                <span class="mr-2 flex h-2 w-2 relative">
-                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                    <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+    <div class="mb-6 sm:mb-8">
+        <div class="sm:flex sm:items-center sm:justify-between">
+            <div class="mb-4 sm:mb-0">
+                <h2 class="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900">Dashboard</h2>
+                <p class="mt-1 sm:mt-2 text-sm text-slate-500">Welcome back, here's what's happening today.</p>
+            </div>
+            <div class="flex flex-wrap items-center gap-2 sm:gap-3">
+                <span class="inline-flex items-center rounded-lg bg-white px-3 py-1.5 text-xs sm:text-sm font-medium text-slate-600 shadow-sm ring-1 ring-slate-900/5">
+                    <span class="mr-2 flex h-2 w-2 relative">
+                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                        <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                    </span>
+                    System Online
                 </span>
-                System Online
-            </span>
-            <button type="button" class="inline-flex items-center gap-x-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 transition-all duration-200">
-                <svg class="-ml-0.5 h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                    <path d="M10.75 4.75a.75.75 0 00-1.5 0v4.5h-4.5a.75.75 0 000 1.5h4.5v4.5a.75.75 0 001.5 0v-4.5h4.5a.75.75 0 000-1.5h-4.5v-4.5z" />
-                </svg>
-                New Exam
-            </button>
+                <a href="{{ route('tests.create') }}" wire:navigate class="inline-flex items-center gap-x-2 rounded-lg bg-indigo-600 px-3.5 sm:px-4 py-2 text-xs sm:text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 transition-all duration-200">
+                    <svg class="-ml-0.5 h-4 sm:h-5 w-4 sm:w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                        <path d="M10.75 4.75a.75.75 0 00-1.5 0v4.5h-4.5a.75.75 0 000 1.5h4.5v4.5a.75.75 0 001.5 0v-4.5h4.5a.75.75 0 000-1.5h-4.5v-4.5z" />
+                    </svg>
+                    <span class="hidden sm:inline">New Exam</span>
+                    <span class="sm:hidden">New</span>
+                </a>
+            </div>
         </div>
     </div>
     
     <!-- Stats Grid -->
-    <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4 mb-8">
+    <div class="grid grid-cols-1 gap-4 sm:gap-6 sm:grid-cols-2 lg:grid-cols-4 mb-6 sm:mb-8">
         <!-- Total Users -->
-        <div class="relative overflow-hidden rounded-2xl bg-white p-6 shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] ring-1 ring-slate-900/5 transition-all duration-300 hover:shadow-md hover:-translate-y-0.5">
+        <div class="relative overflow-hidden rounded-2xl bg-white p-5 sm:p-6 shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] ring-1 ring-slate-900/5 transition-all duration-300 hover:shadow-md hover:-translate-y-0.5">
             <dt>
                 <div class="absolute rounded-xl bg-indigo-50 p-3">
                     <svg class="h-6 w-6 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
@@ -40,7 +43,7 @@
         </div>
 
         <!-- Active Exams -->
-        <div class="relative overflow-hidden rounded-2xl bg-white p-6 shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] ring-1 ring-slate-900/5 transition-all duration-300 hover:shadow-md hover:-translate-y-0.5">
+        <div class="relative overflow-hidden rounded-2xl bg-white p-5 sm:p-6 shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] ring-1 ring-slate-900/5 transition-all duration-300 hover:shadow-md hover:-translate-y-0.5">
             <dt>
                 <div class="absolute rounded-xl bg-violet-50 p-3">
                     <svg class="h-6 w-6 text-violet-600" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
@@ -56,7 +59,7 @@
         </div>
 
         <!-- Completion Rate -->
-        <div class="relative overflow-hidden rounded-2xl bg-white p-6 shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] ring-1 ring-slate-900/5 transition-all duration-300 hover:shadow-md hover:-translate-y-0.5">
+        <div class="relative overflow-hidden rounded-2xl bg-white p-5 sm:p-6 shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] ring-1 ring-slate-900/5 transition-all duration-300 hover:shadow-md hover:-translate-y-0.5">
             <dt>
                 <div class="absolute rounded-xl bg-blue-50 p-3">
                     <svg class="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
@@ -71,7 +74,7 @@
         </div>
 
         <!-- Avg Score -->
-        <div class="relative overflow-hidden rounded-2xl bg-white p-6 shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] ring-1 ring-slate-900/5 transition-all duration-300 hover:shadow-md hover:-translate-y-0.5">
+        <div class="relative overflow-hidden rounded-2xl bg-white p-5 sm:p-6 shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] ring-1 ring-slate-900/5 transition-all duration-300 hover:shadow-md hover:-translate-y-0.5">
             <dt>
                 <div class="absolute rounded-xl bg-amber-50 p-3">
                     <svg class="h-6 w-6 text-amber-600" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">

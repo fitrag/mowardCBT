@@ -3,6 +3,7 @@
 namespace App\Livewire\Tests;
 
 use App\Models\Group;
+use App\Models\Setting;
 use App\Models\Subject;
 use App\Models\Test;
 use Livewire\Attributes\Layout;
@@ -25,13 +26,16 @@ class Create extends Component
     public $end_date = '';
 
     #[Rule('required|integer|min:1')]
-    public $duration = 60;
+    public $duration;
 
     #[Rule('boolean')]
     public $show_results = false;
 
     #[Rule('boolean')]
     public $show_result_details = false;
+
+    #[Rule('boolean')]
+    public $show_score_to_students = true;
 
     #[Rule('boolean')]
     public $enable_safe_browser = false;
@@ -51,11 +55,16 @@ class Create extends Component
     public $subject_configs = [];
     public $selected_groups = [];
 
-    public function mount()
+        public function mount()
     {
         // Set default dates
         $this->start_date = now()->format('Y-m-d\TH:i');
         $this->end_date = now()->addDays(7)->format('Y-m-d\TH:i');
+        
+        // Load default values from settings
+        $this->duration = Setting::get('default_test_duration', 60);
+        $this->enable_safe_browser = Setting::get('enable_safe_browser', false);
+        $this->show_score_to_students = Setting::get('show_score_to_students', true);
     }
 
     public function addSubject()
@@ -136,6 +145,7 @@ class Create extends Component
             'duration' => 'required|integer|min:1',
             'show_results' => 'boolean',
             'show_result_details' => 'boolean',
+            'show_score_to_students' => 'boolean',
             'enable_safe_browser' => 'boolean',
             'correct_score' => 'numeric|min:0',
             'wrong_score' => 'required|numeric',
@@ -160,6 +170,7 @@ class Create extends Component
             'duration' => $this->duration,
             'show_results' => $this->show_results,
             'show_result_details' => $this->show_result_details,
+            'show_score_to_students' => $this->show_score_to_students,
             'enable_safe_browser' => $this->enable_safe_browser,
             'correct_score' => $this->correct_score,
             'wrong_score' => $this->wrong_score,

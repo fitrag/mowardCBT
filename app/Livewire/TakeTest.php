@@ -5,6 +5,7 @@ namespace App\Livewire;
 use App\Models\Question;
 use App\Models\Test;
 use App\Models\TestAttempt;
+use App\Models\Setting;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 
@@ -42,11 +43,19 @@ class TakeTest extends Component
         
         $user = auth()->user();
 
-        // Get or validate attempt
-        $this->attempt = TestAttempt::where('user_id', $user->id)
+        // Get or validate attempt with minimal fields for performance
+        $this->attempt = TestAttempt::select([
+            'id', 'user_id', 'test_id', 'status', 'started_at', 'paused_at',
+            'remaining_seconds', 'questions', 'answers', 'question_start_times', 
+            'locked_questions'
+        ])
+            ->where('user_id', $user->id)
             ->where('test_id', $this->test->id)
             ->where('status', 'in_progress')
             ->firstOrFail();
+
+        // Check if test is paused
+        $this->checkPauseStatus();
 
         // Load questions - use saved order if exists, otherwise generate new
         if ($this->attempt->questions && !empty($this->attempt->questions)) {
@@ -98,8 +107,62 @@ class TakeTest extends Component
             }
         }
 
+        // Initialize timeRemaining to 0 first
+        $this->timeRemaining = 0;
+        
+        // Initialize remaining_seconds if null (first time)
+        if ($this->attempt->remaining_seconds === null) {
+            $totalAllowedSeconds = (int) $this->test->duration * 60;
+            $this->attempt->update([
+                'remaining_seconds' => $totalAllowedSeconds,
+            ]);
+            $this->attempt->refresh();
+        }
+        
         // Calculate time remaining
         $this->calculateTimeRemaining();
+    }
+    
+    /**
+     * Check if test is paused by admin
+     * Uses cache to reduce database queries
+     */
+    public function checkPauseStatus()
+    {
+        // Use cache to avoid hitting database every 5 seconds
+        $cacheKey = "test_attempt_status_{$this->attempt->id}";
+        
+        $status = cache()->remember($cacheKey, 5, function () {
+            return TestAttempt::where('id', $this->attempt->id)->value('status');
+        });
+        
+        if ($status === 'paused') {
+            // Clear cache and refresh to get latest data
+            cache()->forget($cacheKey);
+            $this->attempt->refresh();
+            
+            // Dispatch event to frontend to handle redirect
+            $this->dispatch('test-paused');
+            return false;
+        }
+        
+        return true;
+    }
+    
+    /**
+     * Update remaining time to database (called periodically from frontend)
+     * Only updates if there's a significant change to reduce database writes
+     */
+    public function updateElapsedTime()
+    {
+        // Only update if changed by at least 5 seconds to reduce DB writes
+        $currentSaved = $this->attempt->remaining_seconds;
+        $difference = abs($currentSaved - $this->timeRemaining);
+        
+        if ($difference >= 5) {
+            $this->attempt->remaining_seconds = $this->timeRemaining;
+            $this->attempt->save(['timestamps' => false]); // Skip updating updated_at
+        }
     }
     
     /**
@@ -251,17 +314,8 @@ class TakeTest extends Component
 
     public function calculateTimeRemaining()
     {
-        $startedAt = $this->attempt->started_at;
-        $duration = (int) $this->test->duration; // Cast to integer
-        
-        // Use copy() to avoid mutating the original timestamp
-        $endTime = $startedAt->copy()->addMinutes($duration);
-        
-        // Calculate remaining seconds
-        $remainingSeconds = now()->diffInSeconds($endTime, false);
-        
-        // Cast to integer and ensure non-negative
-        $this->timeRemaining = (int) max(0, $remainingSeconds);
+        // Always use remaining_seconds as source of truth
+        $this->timeRemaining = (int) $this->attempt->remaining_seconds;
 
         // Auto-submit if time is up
         if ($this->timeRemaining <= 0) {
@@ -271,6 +325,9 @@ class TakeTest extends Component
 
     public function saveAnswer($questionId, $answer)
     {
+        // Check if test is paused
+        $this->checkPauseStatus();
+        
         // Check if question is locked
         if (in_array($questionId, $this->locked_questions)) {
             $this->dispatch('toast', ['type' => 'error', 'message' => 'This question is locked due to timer expiry.']);
@@ -344,11 +401,18 @@ class TakeTest extends Component
 
     public function submitTest()
     {
+        // Check if test is paused
+        $this->checkPauseStatus();
+        
         // Calculate score and statistics
         $stats = $this->calculateScore();
 
-        // Calculate duration in seconds
-        $durationSeconds = $this->attempt->started_at->diffInSeconds(now());
+        // Calculate total duration
+        $duration = (int) $this->test->duration;
+        $totalAllowedSeconds = $duration * 60;
+        
+        // Duration = total allowed - remaining time
+        $durationSeconds = $totalAllowedSeconds - $this->timeRemaining;
 
         // Update attempt
         $this->attempt->update([
@@ -429,6 +493,35 @@ class TakeTest extends Component
     public function getAnsweredCount()
     {
         return count($this->answers);
+    }
+
+        public function handleCheating()
+    {
+        // Check if cheating detection is enabled globally
+        if (!Setting::get('enable_cheating_detection', true)) {
+            return; // Cheating detection disabled, ignore
+        }
+        
+        // Calculate score and statistics
+        $stats = $this->calculateScore();
+
+        // Calculate duration in seconds
+        $durationSeconds = $this->attempt->started_at->diffInSeconds(now());
+
+        // Update attempt with cheating flag
+        $this->attempt->update([
+            'submitted_at' => now(),
+            'score' => $stats['score'],
+            'correct_answers' => $stats['correct_answers'],
+            'wrong_answers' => $stats['wrong_answers'],
+            'status' => 'cheating_detected',
+            'answers' => $this->answers,
+            'duration_seconds' => $durationSeconds,
+            'duration_minutes' => round($durationSeconds / 60),
+        ]);
+
+        // Redirect to cheating notification page
+        return redirect()->route('student.test.cheating', $this->test);
     }
 
     public function render()

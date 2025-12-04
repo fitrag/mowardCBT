@@ -5,7 +5,15 @@
             <h1 class="text-2xl font-bold leading-6 text-slate-900">Test Results Report</h1>
             <p class="mt-2 text-sm text-slate-500">View and analyze all student test results with advanced filtering options.</p>
         </div>
-        <div class="mt-4 sm:ml-16 sm:mt-0 sm:flex-none">
+        <div class="mt-4 sm:ml-16 sm:mt-0 sm:flex-none flex gap-2">
+            <x-secondary-button wire:click="export" wire:loading.attr="disabled" wire:loading.class="opacity-50 cursor-not-allowed">
+                <svg wire:loading.remove wire:target="export" class="-ml-0.5 mr-1.5 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                </svg>
+                <x-loading-spinner wire:loading wire:target="export" class="h-5 w-5 -ml-0.5 mr-1.5" />
+                <span wire:loading.remove wire:target="export">Export to Excel</span>
+                <span wire:loading wire:target="export">Exporting...</span>
+            </x-secondary-button>
             <x-secondary-button wire:click="resetFilters" wire:loading.attr="disabled">
                 <svg class="-ml-0.5 mr-1.5 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
@@ -73,15 +81,11 @@
         </div>
 
         <div class="w-40">
-            <input type="date" wire:model.live="filterDateFrom" 
-                class="block w-full rounded-xl border-0 py-2.5 text-slate-900 ring-1 ring-inset ring-slate-200 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm shadow-sm"
-                placeholder="From Date">
+            <x-date-input wire:model.live="filterDateFrom" placeholder="From Date" />
         </div>
 
         <div class="w-40">
-            <input type="date" wire:model.live="filterDateTo" 
-                class="block w-full rounded-xl border-0 py-2.5 text-slate-900 ring-1 ring-inset ring-slate-200 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm shadow-sm"
-                placeholder="To Date">
+            <x-date-input wire:model.live="filterDateTo" placeholder="To Date" />
         </div>
 
         <div class="relative flex-1 min-w-[200px]">
@@ -107,15 +111,17 @@
                         <x-table-th>Group</x-table-th>
                         <x-table-th>Test</x-table-th>
                         <x-table-th>Subject</x-table-th>
+                        <x-table-th>Status</x-table-th>
                         <x-table-th>Score</x-table-th>
                         <x-table-th>Percentage</x-table-th>
                         <x-table-th>Duration</x-table-th>
                         <x-table-th>Submitted</x-table-th>
+                        <x-table-th class="text-right">Actions</x-table-th>
                     </x-slot>
 
                     @forelse($results as $result)
                         @php
-                            $percentage = ($result->score / $result->test->max_score) * 100;
+                            $percentage = $result->score && $result->test->max_score ? ($result->score / $result->test->max_score) * 100 : 0;
                             $percentageClass = $percentage >= 80 ? 'bg-emerald-100 text-emerald-800' : ($percentage >= 60 ? 'bg-amber-100 text-amber-800' : 'bg-rose-100 text-rose-800');
                         @endphp
                         <x-table-row>
@@ -125,7 +131,7 @@
                             </x-table-td>
                             <x-table-td>
                                 <span class="inline-flex items-center rounded-md bg-slate-50 px-2 py-1 text-xs font-medium text-slate-600 ring-1 ring-inset ring-slate-500/10">
-                                    {{ $result->user->groups->first()?->name ?? 'No Group' }}
+                                    {{ $result->user->group?->name ?? 'No Group' }}
                                 </span>
                             </x-table-td>
                             <x-table-td>
@@ -133,17 +139,48 @@
                             </x-table-td>
                             <x-table-td>
                                 <span class="inline-flex items-center rounded-md bg-indigo-50 px-2 py-1 text-xs font-medium text-indigo-700 ring-1 ring-inset ring-indigo-700/10">
-                                    {{ $result->test->subject->name }}
+                                    {{ $result->test->subjects->first()->name ?? 'N/A' }}
                                 </span>
                             </x-table-td>
                             <x-table-td>
-                                <span class="font-semibold text-slate-900">{{ number_format($result->score, 1) }}</span>
-                                <span class="text-slate-500">/ {{ $result->test->max_score }}</span>
+                                @if($result->status === 'in_progress')
+                                    <span class="inline-flex items-center rounded-md bg-amber-50 px-2 py-1 text-xs font-medium text-amber-700 ring-1 ring-inset ring-amber-600/20">
+                                        In Progress
+                                    </span>
+                                @elseif($result->status === 'paused')
+                                    <span class="inline-flex items-center rounded-md bg-red-50 px-2 py-1 text-xs font-medium text-red-700 ring-1 ring-inset ring-red-600/20">
+                                        Paused
+                                    </span>
+                                @elseif($result->status === 'graded')
+                                    <span class="inline-flex items-center rounded-md bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20">
+                                        Completed
+                                    </span>
+                                @elseif($result->status === 'cheating_detected')
+                                    <span class="inline-flex items-center rounded-md bg-orange-50 px-2 py-1 text-xs font-medium text-orange-700 ring-1 ring-inset ring-orange-600/20">
+                                        Cheating Detected
+                                    </span>
+                                @else
+                                    <span class="inline-flex items-center rounded-md bg-slate-50 px-2 py-1 text-xs font-medium text-slate-700 ring-1 ring-inset ring-slate-600/20">
+                                        {{ ucfirst($result->status) }}
+                                    </span>
+                                @endif
                             </x-table-td>
                             <x-table-td>
-                                <span class="inline-flex items-center rounded-full px-2 py-1 text-xs font-medium {{ $percentageClass }}">
-                                    {{ number_format($percentage, 1) }}%
-                                </span>
+                                @if($result->score !== null)
+                                    <span class="font-semibold text-slate-900">{{ number_format($result->score, 1) }}</span>
+                                    <span class="text-slate-500">/ {{ $result->test->max_score }}</span>
+                                @else
+                                    <span class="text-sm text-slate-400">-</span>
+                                @endif
+                            </x-table-td>
+                            <x-table-td>
+                                @if($percentage > 0)
+                                    <span class="inline-flex items-center rounded-full px-2 py-1 text-xs font-medium {{ $percentageClass }}">
+                                        {{ number_format($percentage, 1) }}%
+                                    </span>
+                                @else
+                                    <span class="text-sm text-slate-400">-</span>
+                                @endif
                             </x-table-td>
                             <x-table-td>
                                 @if($result->duration_seconds)
@@ -155,8 +192,41 @@
                                 @endif
                             </x-table-td>
                             <x-table-td>
-                                <div class="text-sm text-slate-900">{{ $result->submitted_at->format('M d, Y') }}</div>
-                                <div class="text-xs text-slate-500">{{ $result->submitted_at->format('H:i') }}</div>
+                                @if($result->submitted_at)
+                                    <div class="text-sm text-slate-900">{{ $result->submitted_at->format('M d, Y') }}</div>
+                                    <div class="text-xs text-slate-500">{{ $result->submitted_at->format('H:i') }}</div>
+                                @else
+                                    <span class="text-sm text-slate-400">-</span>
+                                @endif
+                            </x-table-td>
+                            <x-table-td class="text-right">
+                                @if($result->status === 'in_progress')
+                                    <x-table-button 
+                                        wire:click="pauseTest({{ $result->id }})" 
+                                        wire:loading.class="opacity-50" 
+                                        wire:target="pauseTest({{ $result->id }})"
+                                        color="amber"
+                                    >
+                                        <svg class="-ml-0.5 mr-1.5 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 5.25v13.5m-7.5-13.5v13.5" />
+                                        </svg>
+                                        Pause
+                                    </x-table-button>
+                                @elseif($result->status === 'paused')
+                                    <x-table-button 
+                                        wire:click="resumeTest({{ $result->id }})" 
+                                        wire:loading.class="opacity-50" 
+                                        wire:target="resumeTest({{ $result->id }})"
+                                        color="green"
+                                    >
+                                        <svg class="-ml-0.5 mr-1.5 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.348a1.125 1.125 0 010 1.971l-11.54 6.347a1.125 1.125 0 01-1.667-.985V5.653z" />
+                                        </svg>
+                                        Resume
+                                    </x-table-button>
+                                @else
+                                    <span class="text-sm text-slate-400">-</span>
+                                @endif
                             </x-table-td>
                         </x-table-row>
                     @empty

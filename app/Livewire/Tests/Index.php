@@ -3,6 +3,7 @@
 namespace App\Livewire\Tests;
 
 use App\Models\Test;
+use App\Models\Setting;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Url;
 use Livewire\Component;
@@ -13,10 +14,15 @@ class Index extends Component
 {
     use WithPagination;
 
-    #[Url(history: true)]
+        #[Url(history: true)]
     public $search = '';
 
-    public $perPage = 10;
+    public $perPage;
+
+    public function mount()
+    {
+        $this->perPage = Setting::get('items_per_page', 10);
+    }
 
     public function updatedSearch()
     {

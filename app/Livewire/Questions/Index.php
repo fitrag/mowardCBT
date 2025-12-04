@@ -7,6 +7,7 @@ use App\Enums\QuestionType;
 use App\Imports\QuestionsImport;
 use App\Models\Question;
 use App\Models\QuestionOption;
+use App\Models\Setting;
 use App\Models\Subject;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Rule;
@@ -25,7 +26,7 @@ class Index extends Component
     #[Url(history: true)]
     public $search = '';
 
-    public $perPage = 10;
+        public $perPage;
     public $selected = [];
     public $filterSubject = '';
     public $filterType = '';
@@ -69,8 +70,9 @@ class Index extends Component
     public $options = [];
     public $optionImages = [];
 
-    public function mount()
+        public function mount()
     {
+        $this->perPage = Setting::get('items_per_page', 10);
         $this->resetOptions();
     }
 

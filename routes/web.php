@@ -25,12 +25,15 @@ Route::get('/tests/{test}/edit', \App\Livewire\Tests\Edit::class)->middleware('a
 Route::get('/tests/{test}/results', \App\Livewire\Tests\Results\Index::class)->middleware('auth')->name('tests.results');
 Route::get('/tokens', \App\Livewire\Tokens\Index::class)->middleware('auth')->name('tokens.index');
 Route::get('/reports/test-results', \App\Livewire\Reports\TestResults::class)->middleware('auth')->name('reports.test-results');
+Route::get('/settings', \App\Livewire\Settings\Index::class)->middleware('auth')->name('settings.index');
+
 
 // Student Routes
 Route::get('/student/dashboard', \App\Livewire\StudentDashboard::class)->middleware('auth')->name('student.dashboard');
 Route::get('/student/tests/{test}', \App\Livewire\TestDetail::class)->middleware('auth')->name('student.test.detail');
 Route::get('/student/tests/{test}/take', \App\Livewire\TakeTest::class)->middleware('auth')->name('student.test.take');
 Route::get('/student/tests/{test}/result', \App\Livewire\TestResult::class)->middleware('auth')->name('student.test.result');
+Route::get('/student/tests/{test}/cheating', \App\Livewire\TestCheating::class)->middleware('auth')->name('student.test.cheating');
 
 Route::post('/logout', function () {
     auth()->logout();

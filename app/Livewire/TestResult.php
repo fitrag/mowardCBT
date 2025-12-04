@@ -4,6 +4,7 @@ namespace App\Livewire;
 
 use App\Models\Test;
 use App\Models\TestAttempt;
+use App\Models\Setting;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 
@@ -31,18 +32,25 @@ class TestResult extends Component
             abort(403, 'Unauthorized access to test results.');
         }
 
-        // Load questions if show_result_details is enabled
-        if ($this->test->show_result_details) {
+        // Load questions based on both test setting AND global setting
+        $globalShowAnswers = Setting::get('show_correct_answers', true);
+        if ($this->test->show_result_details && $globalShowAnswers) {
             $this->questions = $this->attempt->questions ?? [];
         }
     }
 
-    public function getScorePercentage()
+        public function getScorePercentage()
     {
         if ($this->test->max_score == 0) {
             return 0;
         }
         return round(($this->attempt->score / $this->test->max_score) * 100, 2);
+    }
+
+    public function isPassed()
+    {
+        $minPassScore = Setting::get('minimum_pass_score', 60);
+        return $this->getScorePercentage() >= $minPassScore;
     }
 
     public function getCorrectCount()

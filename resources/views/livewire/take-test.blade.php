@@ -16,6 +16,36 @@
         }
     }, 1000);
 
+    // Save elapsed time to backend every 15 seconds (optimized)
+    // This ensures timer persists across page refreshes
+    setInterval(() => {
+        $wire.updateElapsedTime();
+    }, 15000);
+
+    // Check for pause status every 10 seconds (optimized)
+    setInterval(() => {
+        $wire.checkPauseStatus();
+    }, 10000);
+
+    // Listen for test paused event
+    window.addEventListener('test-paused', () => {
+        Swal.fire({
+            title: 'Test Paused',
+            text: 'Your test has been paused by the administrator. Please contact your instructor.',
+            icon: 'warning',
+            confirmButtonColor: '#dc2626',
+            confirmButtonText: 'OK',
+            allowOutsideClick: false,
+            allowEscapeKey: false,
+            customClass: {
+                popup: 'rounded-2xl',
+                confirmButton: 'px-6 py-3 rounded-xl font-bold'
+            }
+        }).then(() => {
+            window.location.href = '{{ route('student.dashboard') }}';
+        });
+    });
+
     // Anti-Cheating Measures
     @if($test->enable_safe_browser)
         document.addEventListener('contextmenu', event => event.preventDefault());
@@ -32,14 +62,17 @@
         });
 
         const handleViolation = () => {
-            $wire.dispatch('toast', {type: 'error', message: 'Kamu ketahuan nyontek silahkan bertemu operator untuk melapor'});
-            $wire.submitTest();
+            $wire.handleCheating();
         };
 
         document.addEventListener('visibilitychange', () => {
             if (document.hidden) {
                 handleViolation();
             }
+        });
+
+        window.addEventListener('blur', () => {
+            handleViolation();
         });
     @endif
 ">

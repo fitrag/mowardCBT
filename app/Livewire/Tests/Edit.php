@@ -36,6 +36,9 @@ class Edit extends Component
     public $show_result_details = false;
 
     #[Rule('boolean')]
+    public $show_score_to_students = false;
+
+    #[Rule('boolean')]
     public $enable_safe_browser = false;
 
     #[Rule('numeric|min:0')]
@@ -66,6 +69,7 @@ class Edit extends Component
         $this->duration = $test->duration;
         $this->show_results = (bool) $test->show_results;
         $this->show_result_details = (bool) $test->show_result_details;
+        $this->show_score_to_students = (bool) $test->show_score_to_students;
         $this->enable_safe_browser = (bool) $test->enable_safe_browser;
         $this->correct_score = $test->correct_score;
         $this->wrong_score = $test->wrong_score;
@@ -166,6 +170,7 @@ class Edit extends Component
             'duration' => 'required|integer|min:1',
             'show_results' => 'boolean',
             'show_result_details' => 'boolean',
+            'show_score_to_students' => 'boolean',
             'enable_safe_browser' => 'boolean',
             'correct_score' => 'required|numeric|min:0',
             'wrong_score' => 'required|numeric',
@@ -190,6 +195,7 @@ class Edit extends Component
             'duration' => $this->duration,
             'show_results' => $this->show_results,
             'show_result_details' => $this->show_result_details,
+            'show_score_to_students' => $this->show_score_to_students,
             'enable_safe_browser' => $this->enable_safe_browser,
             'correct_score' => $this->correct_score,
             'wrong_score' => $this->wrong_score,

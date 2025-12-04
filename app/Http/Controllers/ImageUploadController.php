@@ -17,10 +17,10 @@ class ImageUploadController extends Controller
             $file = $request->file('upload');
             $filename = 'question_' . time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
             $path = $file->storeAs('questions', $filename, 'public');
-            // $url = asset('public/storage/' . $path);
+            $url = asset('public/storage/' . $path);
 
             return response()->json([
-                'url' => Storage::url($path)
+                'url' => $url
             ]);
         }
 

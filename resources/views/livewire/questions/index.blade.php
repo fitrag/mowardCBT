@@ -332,26 +332,6 @@
                     </div>
                 </div>
 
-                <div>
-                    <x-input-label for="question_image" value="Question Image (Optional)" />
-                    <div class="mt-1.5">
-                        @if($currentQuestionImage && !$question_image)
-                            <div class="mb-2">
-                                <img src="{{ Storage::url($currentQuestionImage) }}" alt="Current question image" class="h-32 rounded-lg border border-slate-200">
-                            </div>
-                        @endif
-                        @if($question_image)
-                            <div class="mb-2">
-                                <img src="{{ $question_image->temporaryUrl() }}" alt="Preview" class="h-32 rounded-lg border border-slate-200">
-                            </div>
-                        @endif
-                        <input wire:model="question_image" id="question_image" type="file" accept="image/*" class="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 transition-colors">
-                        <x-input-error :messages="$errors->get('question_image')" />
-                        <p class="mt-1 text-xs text-slate-500">JPG, PNG, GIF (max 2MB)</p>
-                        <div wire:loading wire:target="question_image" class="mt-2 text-sm text-indigo-600">Uploading...</div>
-                    </div>
-                </div>
-
                 @if($question_type == 1)
                     <div class="border-t border-slate-200 pt-4">
                         <div class="flex items-center justify-between mb-3">
@@ -459,20 +439,6 @@
                                                 </svg>
                                             </button>
                                         @endif
-                                    </div>
-                                    <div class="ml-7">
-                                        @if(isset($option['current_image']) && $option['current_image'])
-                                            <div class="mb-2">
-                                                <img src="{{ Storage::url($option['current_image']) }}" alt="Current option image" class="h-20 rounded-lg border border-slate-200">
-                                            </div>
-                                        @endif
-                                        @if(isset($optionImages[$index]) && $optionImages[$index])
-                                            <div class="mb-2">
-                                                <img src="{{ $optionImages[$index]->temporaryUrl() }}" alt="Preview" class="h-20 rounded-lg border border-slate-200">
-                                            </div>
-                                        @endif
-                                        <input wire:model="optionImages.{{ $index }}" type="file" accept="image/*" class="block w-full text-xs text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-slate-50 file:text-slate-700 hover:file:bg-slate-100">
-                                        <div wire:loading wire:target="optionImages.{{ $index }}" class="mt-1 text-xs text-indigo-600">Uploading...</div>
                                     </div>
                                 </div>
                             @endforeach
