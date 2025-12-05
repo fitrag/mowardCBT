@@ -7,6 +7,8 @@ use App\Models\Test;
 use App\Models\TestAttempt;
 use App\Models\Question;
 use App\Models\Subject;
+use App\Models\Group;
+use App\Models\Setting;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Illuminate\Support\Facades\DB;
@@ -23,6 +25,11 @@ class Dashboard extends Component
             ->where('end_date', '>=', now())
             ->count();
         
+        // Upcoming tests (starting in next 7 days)
+        $upcomingTests = Test::where('start_date', '>', now())
+            ->where('start_date', '<=', now()->addDays(7))
+            ->count();
+        
         // Calculate completion rate
         $totalAttempts = TestAttempt::count();
         $completedAttempts = TestAttempt::where('status', 'submitted')->count();
@@ -34,6 +41,17 @@ class Dashboard extends Component
             ->avg('score');
         $avgScore = $avgScore ? round($avgScore, 1) : 0;
         
+        // Calculate pass rate
+        $minimumPassScore = Setting::get('minimum_pass_score', 60);
+        $totalGradedAttempts = TestAttempt::where('status', 'submitted')
+            ->whereNotNull('score')
+            ->count();
+        $passedAttempts = TestAttempt::where('status', 'submitted')
+            ->whereNotNull('score')
+            ->where('score', '>=', $minimumPassScore)
+            ->count();
+        $passRate = $totalGradedAttempts > 0 ? round(($passedAttempts / $totalGradedAttempts) * 100, 1) : 0;
+        
         // Get recent activities (last 10 test attempts)
         $recentActivities = TestAttempt::with(['user', 'test'])
             ->where('status', 'submitted')
@@ -44,16 +62,20 @@ class Dashboard extends Component
         // Additional stats
         $totalQuestions = Question::count();
         $totalSubjects = Subject::count();
+        $totalGroups = Group::count();
         
         return view('livewire.dashboard', [
             'totalStudents' => $totalStudents,
             'totalTests' => $totalTests,
             'activeTests' => $activeTests,
+            'upcomingTests' => $upcomingTests,
             'completionRate' => $completionRate,
             'avgScore' => $avgScore,
+            'passRate' => $passRate,
             'recentActivities' => $recentActivities,
             'totalQuestions' => $totalQuestions,
             'totalSubjects' => $totalSubjects,
+            'totalGroups' => $totalGroups,
         ]);
     }
 }
